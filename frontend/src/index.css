@@ -1,0 +1,68 @@
+/* Tailwind CSS v4 import - MUST be first line */
+@import url("https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Playfair Display:ital,wght@0,400;0,600;1,400&family=Inter:wght@300;400;500;600;700&display=swap");
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  /* Creating the dark scale */
+  --color-dark-900: #030304;
+  --color-dark-800: #0a0b0f;
+  --color-dark-700: #12141a;
+  --color-dark-600: #1a1d25;
+  --color-dark-500: #232730;
+  --color-dark-400: #2e323d;
+  --color-dark-300: #3a3f4c;
+  --color-dark-200: #474d5c;
+  --color-dark-100: #555c6d;
+
+  /* Creating the aliases */
+  --color-void: var(--color-dark-900);
+  --color-panel: var(--color-dark-800);
+  --color-accent: var(--color-dark-500);
+}
+
+/* Base styles */
+html {
+  transition: background-color 300ms, color 300ms;
+  --spotlight-color: rgba(11, 23, 41, 0.1);
+  --spotlight-border-color: rgba(148, 218, 249, 0.1);
+  --spotlight-bg-color: rgba(56, 189, 248, 0.1);
+}
+
+html.dark {
+  --spotlight-color: rgba(59, 130, 246, 0.1);
+  --spotlight-border-color: rgba(60, 60, 60, 0.3);
+  --spotlight-bg-color: rgba(255, 255, 255, 0.04);
+}
+
+/* Font utility classes */
+.font-serif {
+  font-family: "Playfair Display", serif;
+}
+
+.font-sans {
+  font-family: "Inter", sans-serif;
+}
+
+.font-mono {
+  font-family: "JetBrains Mono", monospace;
+}
+
+/* .dark-theme-color {
+  background-color: #030304;
+} */
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: rgb(209 213 219); /* gray-300 */
+  border-radius: 9999px;
+}
