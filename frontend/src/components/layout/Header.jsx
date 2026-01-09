@@ -1,8 +1,9 @@
-import { Facebook, Twitter, Instagram, Mail, MapPin, Phone, ArrowRight, Sun, Menu, Moon, X, Bell, Shield, Search, Home, Users, Calendar, DollarSign, Settings, LogOut, Book } from 'lucide-react';
+import { Facebook, Twitter, Instagram, Mail, MapPin, Phone, ArrowRight, Sun, Menu, Moon, X, Bell, Shield, Search, Home, Users, Calendar, DollarSign, Settings, LogOut, Book, User } from 'lucide-react';
 import { useTheme } from '../utilities/ThemeProvider';
 import { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useLogoutMutation } from '../../pages/authenticationPages/authApiSlice';
+import { useGetMeQuery } from '../../pages/authenticatedPages/userApiSlice';
 import useAuth from '../../hooks/useAuth';
 
 const Header = () => {
@@ -13,6 +14,7 @@ const Header = () => {
     const [logout, { isSuccess, isLoading, reset }] = useLogoutMutation()
     const { isLoggedIn, isAdmin: isAdminState } = useAuth()
     const navigate = useNavigate()
+    const { data: currentUser } = useGetMeQuery(undefined, { skip: !isLoggedIn })
 
     const handleLogout = async () => {
         try {
@@ -154,24 +156,32 @@ const Header = () => {
                                         >
                                             <div className="hidden md:block text-right">
                                                 <p className="text-sm font-sans font-semibold text-gray-900 dark:text-white">
-                                                    Sarah Johnson
+                                                    {currentUser?.name || 'Admin User'}
                                                 </p>
                                                 <p className="text-xs font-sans text-gray-500 dark:text-gray-400">
-                                                    Hotel Manager
+                                                    {currentUser?.role === 'admin' ? 'Hotel Manager' : currentUser?.role || 'User'}
                                                 </p>
                                             </div>
                                             <div className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold bg-blue-600 dark:bg-blue-500">
-                                                SJ
+                                                {currentUser?.name ? currentUser.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) : 'AD'}
                                             </div>
                                         </button>
 
                                         {/* Admin Dropdown Menu */}
                                         {isAdminMenuOpen && (
                                             <div className="absolute right-0 mt-2 w-64 bg-white dark:bg-dark-800 rounded-xl border border-gray-200 dark:border-white/10 shadow-lg py-2">
-                                                <div className="px-4 py-3 border-b border-gray-200 dark:border-white/10">
-                                                    <p className="text-sm font-medium text-gray-900 dark:text-white">Sarah Johnson</p>
-                                                    <p className="text-xs text-gray-500 dark:text-gray-400">sarah@hotel.com</p>
-                                                </div>
+                                                {/* Profile Detail */}
+                                                <Link
+                                                    to="/admin/profile"
+                                                    className="block px-4 py-3 border-b border-gray-200 dark:border-white/10 hover:bg-gray-50 dark:hover:bg-white/5 transition-colors"
+                                                    onClick={() => setIsAdminMenuOpen(false)}
+                                                >
+                                                    <div className="flex items-center gap-2">
+                                                        <User size={14} className="text-gray-400" />
+                                                        <p className="text-sm font-medium text-gray-900 dark:text-white">{currentUser?.name || 'Admin User'}</p>
+                                                    </div>
+                                                    <p className="text-xs text-gray-500 dark:text-gray-400 ml-5">{currentUser?.email || 'admin@hotel.com'}</p>
+                                                </Link>
 
                                                 <div className="py-2">
                                                     {adminNavLinks.map((link) => (
