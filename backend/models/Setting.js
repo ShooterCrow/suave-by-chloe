@@ -84,11 +84,17 @@ const settingSchema = new mongoose.Schema(
       logo: {
         url: String,
         publicId: String,
+        width: Number,
+        height: Number,
+        format: String,
       },
       gallery: [
         {
           url: String,
           publicId: String,
+          width: Number,
+          height: Number,
+          format: String,
         },
       ],
       // Singleton enforcer

@@ -13,6 +13,7 @@ const root = require("./routes/root");
 const auth = require("./routes/auth");
 const rooms = require("./routes/rooms");
 const settings = require("./routes/settings");
+const users = require("./routes/users");
 
 // Load env vars
 dotenv.config();
@@ -41,6 +42,7 @@ app.use("/api", root);
 app.use("/api/auth", auth);
 app.use("/api/rooms", rooms);
 app.use("/api/settings", settings);
+app.use("/api/users", users);
 
 // Then add the 404 handler LAST
 app.all(/(.*)/, (req, res) => {

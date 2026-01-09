@@ -36,6 +36,10 @@ html.dark {
   --spotlight-bg-color: rgba(255, 255, 255, 0.04);
 }
 
+button {
+  cursor: pointer;
+}
+
 /* Font utility classes */
 .font-serif {
   font-family: "Playfair Display", serif;

@@ -1,55 +1,45 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
 import {
     Save,
     Building,
-    MapPin,
     Phone,
-    Mail,
-    Globe,
     CreditCard,
     Shield,
     FileText,
-    Bell,
     Users,
-    Key,
     Lock,
     Database,
     Upload,
     Download,
     Copy,
     Eye,
-    EyeOff,
     Check,
     X,
     AlertCircle,
     Edit,
     Trash2,
     Plus,
-    ChevronRight,
-    Calendar,
     Clock,
-    DollarSign,
     Percent,
-    Tag,
     Receipt,
-    MessageSquare,
     Mail as MailIcon,
-    Printer,
     Code,
     Palette,
-    Moon,
-    Sun,
-    Wifi,
-    Coffee,
-    Car,
-    Dumbbell,
-    Waves
 } from 'lucide-react';
 import Button from '../../../components/ui/Button';
 import Input from '../../../components/ui/Input';
 import Badge from '../../../components/ui/Badge';
 import SpotlightCard from '../../../components/ui/SpotlightCard';
+import Loader from '../../../components/ui/Loader';
+import {
+    useGetSettingsQuery,
+    useUpdateSettingsMutation,
+    useUploadLogoMutation,
+    useUploadGalleryImagesMutation,
+    useDeleteGalleryImageMutation
+} from '../settingsApiSlice';
+import { toast } from 'react-hot-toast';
 
 // Toggle Switch Component
 
@@ -69,49 +59,87 @@ const ToggleSwitch = ({ enabled, onChange, label }) => {
 };
 
 // Hotel Info Component
-const HotelInfoSettings = () => {
-    const [hotelInfo, setHotelInfo] = useState({
-        name: 'Suave By Chloe',
-        tagline: 'Experience Luxury in Abuja',
-        description: 'A premier hotel offering exceptional comfort, world-class amenities, and impeccable service in the heart of Kubwa.',
-        address: 'Kubwa, Abuja, Nigeria',
-        city: 'Abuja',
-        state: 'FCT',
-        country: 'Nigeria',
-        postalCode: '901101',
-        phone: '+234 800 123 4567',
-        email: 'info@suavebychloe.com',
-        website: 'https://suavebychloe.com',
-        checkInTime: '14:00',
-        checkOutTime: '12:00',
-        timezone: 'Africa/Lagos',
-        currency: 'NGN',
-        currencySign: '₦',
-        totalRooms: 45,
-        starRating: 5
+const HotelInfoSettings = ({ data, onUpdate, isSaving }) => {
+    const [hotelInfo, setHotelInfo] = useState(data || {
+        name: '',
+        tagline: '',
+        description: '',
+        address: '',
+        city: '',
+        state: '',
+        country: '',
+        postalCode: '',
+        phone: '',
+        email: '',
+        website: '',
+        checkInTime: '',
+        checkOutTime: '',
+        timezone: '',
+        currency: '',
+        currencySign: '',
+        totalRooms: 0,
+        starRating: 0,
+        logo: { url: '', publicId: '' },
+        gallery: []
     });
 
-    const [logo, setLogo] = useState(null);
-    const [images, setImages] = useState([]);
+    const [logoFile, setLogoFile] = useState(null);
+    const [galleryFiles, setGalleryFiles] = useState([]);
+    const [logoPreview, setLogoPreview] = useState(data?.logo?.url || '');
 
-    const handleFileUpload = (event, type) => {
-        const file = event.target.files[0];
+    useEffect(() => {
+        if (data) {
+            setHotelInfo(data);
+            setLogoPreview(data.logo?.url || '');
+        }
+    }, [data]);
+
+    const [deleteImage] = useDeleteGalleryImageMutation();
+
+    const handleLogoChange = (e) => {
+        const file = e.target.files[0];
         if (file) {
-            if (type === 'logo') {
-                setLogo(URL.createObjectURL(file));
-            } else {
-                setImages([...images, URL.createObjectURL(file)]);
-            }
+            setLogoFile(file);
+            setLogoPreview(URL.createObjectURL(file));
         }
     };
 
-    const handleSave = () => {
-        alert('Hotel information saved successfully!');
-        // Here you would typically make an API call
+    const handleGalleryChange = (e) => {
+        const files = Array.from(e.target.files || []);
+        setGalleryFiles(prev => [...prev, ...files]);
     };
 
+    const handleSave = () => {
+        onUpdate({
+            hotelInfo,
+            logo: logoFile,
+            gallery: galleryFiles
+        });
+        // Clear local file state after save (optional, depend on preference)
+        setLogoFile(null);
+        setGalleryFiles([]);
+    };
+
+    const handleDeleteGalleryImage = async (publicId) => {
+        if (!window.confirm('Are you sure you want to delete this image?')) return;
+        try {
+            await deleteImage(publicId).unwrap();
+            toast.success('Image deleted successfully');
+        } catch (err) {
+            toast.error(err?.data?.message || 'Failed to delete image');
+        }
+    };
+
+    // Images from data (already on server)
+    const existingImages = hotelInfo.gallery || [];
+    // Newly selected images (not yet uploaded)
+    const previewImages = galleryFiles.map(file => URL.createObjectURL(file));
+
+    // const logo = logoPreview; // Using logoPreview directly in JSX
+    // const images = hotelInfo.gallery || []; // Using existingImages/previewImages
+
     return (
-        <SpotlightCard className="rounded-2xl border bg-white border-gray-200 dark:bg-dark-800 dark:border-white/10 p-6">
+        <div className="rounded-2xl border bg-white border-gray-200 dark:bg-dark-800 dark:border-white/10 p-6">
             <div className="flex items-center justify-between mb-6">
                 <div>
                     <h3 className="font-serif text-xl font-bold text-gray-900 dark:text-white">
@@ -121,13 +149,15 @@ const HotelInfoSettings = () => {
                         Update your hotel's basic information and branding
                     </p>
                 </div>
-                <button
+                <Button
                     onClick={handleSave}
-                    className="px-4 py-2 rounded-lg font-sans font-medium transition-colors bg-blue-600 dark:bg-blue-500 text-white hover:bg-blue-700 dark:hover:bg-blue-600 flex items-center gap-2"
+                    disabled={isSaving}
+                    isLoading={isSaving}
+                    className="flex items-center gap-2"
                 >
                     <Save size={18} />
                     Save Changes
-                </button>
+                </Button>
             </div>
 
             <div className="space-y-8">
@@ -137,9 +167,9 @@ const HotelInfoSettings = () => {
                         Hotel Logo
                     </label>
                     <div className="flex items-center gap-6">
-                        <div className="w-32 h-32 rounded-lg border-2 border-dashed border-gray-300 dark:border-white/20 flex items-center justify-center overflow-hidden">
-                            {logo ? (
-                                <img src={logo} alt="Hotel Logo" className="w-full h-full object-contain p-2" />
+                        <div className="w-32 h-32 rounded-lg border-2 border-dashed border-gray-300 dark:border-white/20 flex items-center justify-center overflow-hidden relative">
+                            {logoPreview ? (
+                                <img src={logoPreview} alt="Hotel Logo" className="w-full h-full object-contain p-2" />
                             ) : (
                                 <div className="text-center p-4">
                                     <Building size={32} className="mx-auto text-gray-400 mb-2" />
@@ -153,14 +183,14 @@ const HotelInfoSettings = () => {
                                 id="logo-upload"
                                 className="hidden"
                                 accept="image/*"
-                                onChange={(e) => handleFileUpload(e, 'logo')}
+                                onChange={handleLogoChange}
                             />
                             <label
                                 htmlFor="logo-upload"
                                 className="px-4 py-2 rounded-lg font-sans font-medium transition-colors border border-gray-300 dark:border-white/10 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/5 cursor-pointer inline-flex items-center gap-2"
                             >
                                 <Upload size={16} />
-                                {logo ? 'Change Logo' : 'Upload Logo'}
+                                {logoPreview ? 'Change Logo' : 'Upload Logo'}
                             </label>
                             <p className="text-xs font-sans text-gray-500 dark:text-gray-400 mt-2">
                                 Recommended: 300×300px, PNG or SVG format
@@ -323,25 +353,33 @@ const HotelInfoSettings = () => {
                         Hotel Gallery
                     </h4>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                        {images.map((image, index) => (
-                            <div key={index} className="relative aspect-video rounded-lg overflow-hidden border border-gray-300 dark:border-white/10">
-                                <img src={image} alt={`Gallery ${index + 1}`} className="w-full h-full object-cover" />
+                        {existingImages.map((image, index) => (
+                            <div key={`existing-${index}`} className="relative aspect-video rounded-lg overflow-hidden border border-gray-300 dark:border-white/10">
+                                <img src={image.url} alt={`Gallery ${index + 1}`} className="w-full h-full object-cover" />
                                 <button
-                                    onClick={() => setImages(images.filter((_, i) => i !== index))}
-                                    className="absolute top-2 right-2 w-6 h-6 rounded-full bg-red-500 text-white flex items-center justify-center"
+                                    onClick={() => handleDeleteGalleryImage(image.publicId)}
+                                    className="absolute top-2 right-2 w-6 h-6 rounded-full bg-red-500 text-white flex items-center justify-center hover:bg-red-600 transition-colors"
                                 >
                                     <X size={14} />
                                 </button>
                             </div>
                         ))}
-                        <label className="aspect-video rounded-lg border-2 border-dashed border-gray-300 dark:border-white/20 flex flex-col items-center justify-center cursor-pointer hover:border-blue-500 transition-colors">
+                        {previewImages.map((url, index) => (
+                            <div key={`preview-${index}`} className="relative aspect-video rounded-lg overflow-hidden border border-blue-300 dark:border-blue-500/30">
+                                <img src={url} alt={`New Preview ${index + 1}`} className="w-full h-full object-cover opacity-70" />
+                                <div className="absolute inset-0 flex items-center justify-center">
+                                    <span className="text-xs font-sans text-blue-600 dark:text-blue-400 font-bold bg-white/80 px-2 py-1 rounded">Pending</span>
+                                </div>
+                            </div>
+                        ))}
+                        <label className="aspect-video rounded-lg border-2 border-dashed border-gray-300 dark:border-white/20 flex flex-col items-center justify-center cursor-pointer hover:border-blue-500 transition-colors relative">
                             <Upload size={24} className="text-gray-400 mb-2" />
                             <span className="text-sm font-sans text-gray-500 dark:text-gray-400">Add Image</span>
                             <input
                                 type="file"
                                 className="hidden"
                                 accept="image/*"
-                                onChange={(e) => handleFileUpload(e, 'gallery')}
+                                onChange={handleGalleryChange}
                                 multiple
                             />
                         </label>
@@ -351,19 +389,17 @@ const HotelInfoSettings = () => {
                     </p>
                 </div>
             </div>
-        </SpotlightCard>
+        </div>
     );
 };
 
 // Taxes & Fees Component
-const TaxesFeesSettings = () => {
-    const [taxes, setTaxes] = useState([
-        { id: 1, name: 'VAT', type: 'percentage', rate: 7.5, description: 'Nigerian Value Added Tax', appliesTo: 'all', enabled: true },
-        { id: 2, name: 'City Tax', type: 'percentage', rate: 2, description: 'Abuja city tax', appliesTo: 'all', enabled: true },
-        { id: 3, name: 'Facility Fee', type: 'fixed', amount: 15000, description: 'Daily hotel facility fee', appliesTo: 'per_night', enabled: true },
-        { id: 4, name: 'Cleaning Fee', type: 'fixed', amount: 25000, description: 'One-time cleaning fee', appliesTo: 'per_stay', enabled: true },
-        { id: 5, name: 'Service Charge', type: 'percentage', rate: 12, description: 'Service charge for room service', appliesTo: 'services', enabled: false }
-    ]);
+const TaxesFeesSettings = ({ data, onUpdate, isSaving }) => {
+    const [taxes, setTaxes] = useState(data || []);
+
+    useEffect(() => {
+        if (data) setTaxes(data);
+    }, [data]);
 
     const [newTax, setNewTax] = useState({
         name: '',
@@ -404,7 +440,7 @@ const TaxesFeesSettings = () => {
     };
 
     const handleSave = () => {
-        alert('Taxes and fees saved successfully!');
+        onUpdate({ taxesAndFees: taxes });
     };
 
     return (
@@ -418,13 +454,15 @@ const TaxesFeesSettings = () => {
                         Configure taxes, fees, and additional charges
                     </p>
                 </div>
-                <button
+                <Button
                     onClick={handleSave}
+                    disabled={isSaving}
+                    isLoading={isSaving}
                     className="px-4 py-2 rounded-lg font-sans font-medium transition-colors bg-blue-600 dark:bg-blue-500 text-white hover:bg-blue-700 dark:hover:bg-blue-600 flex items-center gap-2"
                 >
                     <Save size={18} />
                     Save Changes
-                </button>
+                </Button>
             </div>
 
             <div className="space-y-6">
@@ -514,8 +552,8 @@ const TaxesFeesSettings = () => {
                         Current Taxes & Fees
                     </h4>
                     <div className="space-y-4">
-                        {taxes.map(tax => (
-                            <div key={tax.id} className="p-4 rounded-lg border border-gray-200 dark:border-white/10 hover:border-blue-300 dark:hover:border-blue-500/50 transition-colors">
+                        {taxes.map((tax, idx) => (
+                            <div key={idx} className="p-4 rounded-lg border border-gray-200 dark:border-white/10 hover:border-blue-300 dark:hover:border-blue-500/50 transition-colors">
                                 <div className="flex items-center justify-between mb-3">
                                     <div className="flex items-center gap-3">
                                         <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${tax.enabled ? 'bg-green-100 dark:bg-green-900/30' : 'bg-gray-100 dark:bg-white/10'}`}>
@@ -572,8 +610,8 @@ const TaxesFeesSettings = () => {
                             <span className="font-sans text-gray-700 dark:text-gray-300">Room Rate (3 nights)</span>
                             <span className="font-sans font-medium text-gray-900 dark:text-white">₦897,000</span>
                         </div>
-                        {taxes.filter(t => t.enabled).map(tax => (
-                            <div key={tax.id} className="flex justify-between text-sm">
+                        {taxes.filter(t => t.enabled).map((tax, idx) => (
+                            <div key={idx} className="flex justify-between text-sm">
                                 <span className="text-gray-600 dark:text-gray-400">{tax.name}</span>
                                 <span className="font-medium text-gray-900 dark:text-white">
                                     {tax.type === 'percentage'
@@ -597,27 +635,27 @@ const TaxesFeesSettings = () => {
 };
 
 // Policies Component
-const PoliciesSettings = () => {
-    const [policies, setPolicies] = useState({
+const PoliciesSettings = ({ data, onUpdate, isSaving }) => {
+    const [policies, setPolicies] = useState(data || {
         cancellation: {
             freeCancellationHours: 48,
             cancellationFee: 50,
             noShowFee: 100,
-            description: 'Free cancellation up to 48 hours before check-in. After that, a 50% fee applies.'
+            description: ''
         },
         deposit: {
             required: true,
             amountType: 'percentage',
             amount: 30,
             dueHours: 24,
-            description: '30% deposit required within 24 hours of booking'
+            description: ''
         },
         checkIn: {
             earlyCheckIn: true,
             earlyCheckInFee: 15000,
             lateCheckIn: true,
             latestCheckInTime: '22:00',
-            description: 'Early check-in available for ₦15,000. Late check-in available until 10 PM.'
+            description: ''
         },
         children: {
             childrenAllowed: true,
@@ -625,25 +663,29 @@ const PoliciesSettings = () => {
             extraBedFee: 25000,
             cribAvailable: true,
             cribFee: 10000,
-            description: 'Children up to 12 years stay free. Extra bed: ₦25,000/night. Crib: ₦10,000/night.'
+            description: ''
         },
         pets: {
             petsAllowed: false,
             petFee: 25000,
             maxPets: 1,
-            description: 'Pets are not allowed.'
+            description: ''
         },
         smoking: {
             smokingAllowed: false,
             smokingFee: 150000,
-            description: 'No smoking in rooms. ₦150,000 cleaning fee if violated.'
+            description: ''
         }
     });
+
+    useEffect(() => {
+        if (data) setPolicies(data);
+    }, [data]);
 
     const [editingPolicy, setEditingPolicy] = useState(null);
 
     const handleSave = () => {
-        alert('Policies saved successfully!');
+        onUpdate({ policies });
     };
 
     const PolicyCard = ({ title, policy, fields, icon: Icon }) => (
@@ -727,7 +769,7 @@ const PoliciesSettings = () => {
                                     Description
                                 </label>
                                 <textarea
-                                    value={currentPolicy.description}
+                                    value={currentPolicy?.description}
                                     onChange={(e) => {
                                         const updated = { ...currentPolicy, description: e.target.value };
                                         setPolicies({ ...policies, [policyKey]: updated });
@@ -794,7 +836,10 @@ const PoliciesSettings = () => {
                                 Cancel
                             </Button>
                             <Button
+                                className='cursor-pointer'
                                 onClick={handleSaveChanges}
+                                disabled={isSaving}
+                                isLoading={isSaving}
                             >
                                 Save Changes
                             </Button>
@@ -806,7 +851,7 @@ const PoliciesSettings = () => {
     };
 
     return (
-        <SpotlightCard className="rounded-2xl border bg-white border-gray-200 dark:bg-dark-800 dark:border-white/10 p-6">
+        <div className="rounded-2xl border bg-white border-gray-200 dark:bg-dark-800 dark:border-white/10 p-6">
             <div className="flex items-center justify-between mb-6">
                 <div>
                     <h3 className="font-serif text-xl font-bold text-gray-900 dark:text-white">
@@ -818,6 +863,8 @@ const PoliciesSettings = () => {
                 </div>
                 <Button
                     onClick={handleSave}
+                    disabled={isSaving}
+                    isLoading={isSaving}
                     className="flex items-center gap-2"
                 >
                     <Save size={18} />
@@ -894,86 +941,35 @@ const PoliciesSettings = () => {
                 </h4>
                 <div className="space-y-4">
                     <ToggleSwitch
-                        enabled={true}
-                        onChange={() => { }}
+                        enabled={policies.sendPolicyConfirmation}
+                        onChange={(val) => setPolicies({ ...policies, sendPolicyConfirmation: val })}
                         label="Send policy confirmation emails"
                     />
                     <ToggleSwitch
-                        enabled={false}
-                        onChange={() => { }}
+                        enabled={policies.requirePolicyAcceptance}
+                        onChange={(val) => setPolicies({ ...policies, requirePolicyAcceptance: val })}
                         label="Require policy acceptance at booking"
                     />
                     <ToggleSwitch
-                        enabled={true}
-                        onChange={() => { }}
+                        enabled={policies.displayPolicies}
+                        onChange={(val) => setPolicies({ ...policies, displayPolicies: val })}
                         label="Display policies on booking page"
                     />
                 </div>
             </div>
 
             {editingPolicy && <EditPolicyModal />}
-        </SpotlightCard>
+        </div>
     );
 };
 
 // Email Templates Component
-const EmailTemplatesSettings = () => {
-    const [templates, setTemplates] = useState([
-        {
-            id: 1,
-            name: 'Booking Confirmation',
-            type: 'confirmation',
-            subject: 'Your Booking Confirmation - {hotel_name}',
-            enabled: true,
-            lastModified: '2024-01-15',
-            variables: ['guest_name', 'booking_id', 'check_in', 'check_out', 'room_type', 'total_amount']
-        },
-        {
-            id: 2,
-            name: 'Payment Receipt',
-            type: 'payment',
-            subject: 'Payment Receipt - Booking {booking_id}',
-            enabled: true,
-            lastModified: '2024-01-10',
-            variables: ['guest_name', 'booking_id', 'amount_paid', 'payment_method', 'transaction_id']
-        },
-        {
-            id: 3,
-            name: 'Pre-Arrival',
-            type: 'pre_arrival',
-            subject: 'Prepare for Your Stay at {hotel_name}',
-            enabled: true,
-            lastModified: '2024-01-05',
-            variables: ['guest_name', 'check_in', 'check_out', 'room_number', 'hotel_address']
-        },
-        {
-            id: 4,
-            name: 'Check-out Reminder',
-            type: 'reminder',
-            subject: 'Check-out Reminder for {check_out}',
-            enabled: false,
-            lastModified: '2024-01-01',
-            variables: ['guest_name', 'check_out_time', 'late_check_out_fee']
-        },
-        {
-            id: 5,
-            name: 'Cancellation Confirmation',
-            type: 'cancellation',
-            subject: 'Booking Cancellation - {booking_id}',
-            enabled: true,
-            lastModified: '2023-12-28',
-            variables: ['guest_name', 'booking_id', 'cancellation_date', 'refund_amount']
-        },
-        {
-            id: 6,
-            name: 'Review Request',
-            type: 'review',
-            subject: 'Share Your Experience at {hotel_name}',
-            enabled: true,
-            lastModified: '2023-12-20',
-            variables: ['guest_name', 'check_out', 'review_link']
-        }
-    ]);
+const EmailTemplatesSettings = ({ data, onUpdate, isSaving }) => {
+    const [templates, setTemplates] = useState(data || []);
+
+    useEffect(() => {
+        if (data) setTemplates(data);
+    }, [data]);
 
     const [selectedTemplate, setSelectedTemplate] = useState(null);
     const [previewMode, setPreviewMode] = useState('desktop');
@@ -1032,7 +1028,7 @@ const EmailTemplatesSettings = () => {
     };
 
     const handleSaveTemplate = () => {
-        alert('Template saved successfully!');
+        onUpdate({ emailTemplates: templates });
     };
 
     const handleCopyVariable = (variable) => {
@@ -1062,6 +1058,8 @@ const EmailTemplatesSettings = () => {
                     </Button>
                     <Button
                         onClick={handleSaveTemplate}
+                        disabled={isSaving}
+                        isLoading={isSaving}
                         className="flex items-center gap-2"
                     >
                         <Save size={18} />
@@ -1269,7 +1267,46 @@ const EmailTemplatesSettings = () => {
 // Main AdminSettings Component
 const AdminSettings = () => {
     const [activeSection, setActiveSection] = useState('hotel-info');
-    const [saving, setSaving] = useState(false);
+    const { data: settings, isLoading, isError, error } = useGetSettingsQuery();
+    const [updateSettings, { isLoading: isUpdating, reset: resetUpdate }] = useUpdateSettingsMutation();
+
+    const handleUpdate = async (updatedData) => {
+        const formData = new FormData();
+
+        // Convert the updatedData object to FormData
+        Object.entries(updatedData).forEach(([key, value]) => {
+            if (value === undefined || value === null) return;
+
+            // Handle logo (single file)
+            if (key === 'logo' && (value instanceof File || value instanceof Blob)) {
+                formData.append(key, value);
+            }
+            // Handle gallery (array of files)
+            else if (key === 'gallery' && Array.isArray(value)) {
+                value.forEach(file => {
+                    if (file instanceof File || file instanceof Blob) {
+                        formData.append(key, file);
+                    }
+                });
+            }
+            // Handle objects (like hotelInfo)
+            else if (typeof value === 'object' && !(value instanceof File) && !(value instanceof Blob)) {
+                formData.append(key, JSON.stringify(value));
+            }
+            // Handle plain values
+            else {
+                formData.append(key, value);
+            }
+        });
+
+        try {
+            await updateSettings(formData).unwrap();
+            toast.success('Settings updated successfully');
+            setTimeout(() => resetUpdate(), 3000);
+        } catch (err) {
+            toast.error(err?.data?.message || 'Failed to update settings');
+        }
+    };
 
     const sections = [
         { id: 'hotel-info', label: 'Hotel Information', icon: Building },
@@ -1283,20 +1320,20 @@ const AdminSettings = () => {
     ];
 
     const handleSaveAll = () => {
-        setSaving(true);
-        setTimeout(() => {
-            alert('All settings saved successfully!');
-            setSaving(false);
-        }, 1000);
+        // Each sub-component handles its own saving for precision.
+        toast.success('All settings are auto-synced on save');
     };
 
     const handleBackup = () => {
-        alert('Settings backup initiated...');
+        toast.loading('Settings backup initiated...');
     };
 
     const handleRestore = () => {
-        alert('Settings restore dialog opened...');
+        toast.loading('Settings restore dialog opened...');
     };
+
+    if (isLoading) return <Loader />;
+    if (isError) return <div className="p-8 text-center text-red-500">Error loading settings: {error?.data?.message || 'Unknown error'}</div>;
 
     return (
         <div className="min-h-screen bg-gray-50 dark:bg-void p-4 sm:p-6 lg:p-8">
@@ -1338,11 +1375,11 @@ const AdminSettings = () => {
                             </Button>
                             <Button
                                 onClick={handleSaveAll}
-                                disabled={saving}
-                                isLoading={saving}
+                                disabled={isUpdating}
+                                isLoading={isUpdating}
                                 className="px-6 py-2 flex items-center gap-2"
                             >
-                                {!saving && (
+                                {!isUpdating && (
                                     <>
                                         <Save size={18} />
                                         Save All Changes
@@ -1381,10 +1418,34 @@ const AdminSettings = () => {
 
                 {/* Settings Content */}
                 <div className="mb-8">
-                    {activeSection === 'hotel-info' && <HotelInfoSettings />}
-                    {activeSection === 'taxes-fees' && <TaxesFeesSettings />}
-                    {activeSection === 'policies' && <PoliciesSettings />}
-                    {activeSection === 'email-templates' && <EmailTemplatesSettings />}
+                    {activeSection === 'hotel-info' && (
+                        <HotelInfoSettings
+                            data={settings?.hotelInfo}
+                            onUpdate={handleUpdate}
+                            isSaving={isUpdating}
+                        />
+                    )}
+                    {activeSection === 'taxes-fees' && (
+                        <TaxesFeesSettings
+                            data={settings?.taxesAndFees}
+                            onUpdate={handleUpdate}
+                            isSaving={isUpdating}
+                        />
+                    )}
+                    {activeSection === 'policies' && (
+                        <PoliciesSettings
+                            data={settings?.policies}
+                            onUpdate={handleUpdate}
+                            isSaving={isUpdating}
+                        />
+                    )}
+                    {activeSection === 'email-templates' && (
+                        <EmailTemplatesSettings
+                            data={settings?.emailTemplates}
+                            onUpdate={handleUpdate}
+                            isSaving={isUpdating}
+                        />
+                    )}
                     {activeSection === 'users' && (
                         <SpotlightCard className="rounded-2xl border bg-white border-gray-200 dark:bg-dark-800 dark:border-white/10 p-6">
                             <div className="text-center py-12">

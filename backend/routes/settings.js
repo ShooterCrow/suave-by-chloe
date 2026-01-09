@@ -11,15 +11,36 @@ const router = express.Router();
 const { protect, admin } = require("../middleware/auth");
 const upload = require("../config/multer");
 
-router.route("/").get(getSettings).put(protect, admin, updateSettings);
+router
+  .route("/")
+  .get(getSettings)
+  .put(
+    protect,
+    admin,
+    upload.fields([
+      { name: "logo", maxCount: 1 },
+      { name: "gallery", maxCount: 10 },
+    ]),
+    updateSettings
+  );
 
 // Logo upload
-router.post("/upload-logo", protect, admin, upload.single("image"), uploadLogo);
+router.post(
+  "/upload-logo",
+  protect,
+  admin,
+  upload.fields([{ name: "logo", maxCount: 1 }]),
+  uploadLogo
+);
 
 // Gallery management
-router
-  .route("/gallery")
-  .post(protect, admin, upload.array("images", 10), uploadGalleryImages);
+router.post(
+  "/gallery",
+  protect,
+  admin,
+  upload.fields([{ name: "gallery", maxCount: 10 }]),
+  uploadGalleryImages
+);
 
 router.delete("/gallery/:publicId", protect, admin, deleteGalleryImage);
 

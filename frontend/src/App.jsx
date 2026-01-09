@@ -24,6 +24,7 @@ import ForgotPassword from './pages/authenticationPages/ForgotPassword'
 import RequireAuth from './pages/authenticationPages/RequireAuth'
 import EmailVerification from './pages/authenticationPages/EmailVerification'
 import PersistLogin from './pages/authenticationPages/PersistLogin'
+import AdminProfile from './pages/authenticatedPages/Admin/AdminProfile'
 
 const App = () => {
   return (
@@ -51,6 +52,7 @@ const App = () => {
               <Route element={<RequireAuth allowedRoles={['manager', 'admin']} />}>
                 <Route path="admin" element={<AdminLayoutProvider />}>
                   <Route path='dashboard' element={<AdminDashboard />} />
+                  <Route path='profile' element={<AdminProfile />} />
                   <Route path="rooms">
                     <Route index element={<AdminRooms />} />
                   </Route>
