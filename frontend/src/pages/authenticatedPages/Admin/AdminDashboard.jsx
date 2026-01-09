@@ -371,53 +371,64 @@ const UpcomingCheckOuts = () => {
 
             <div className="space-y-4">
                 {checkOuts.map((checkOut) => (
-                    <div key={checkOut.id} className="flex items-center justify-between p-4 rounded-lg border border-gray-200 dark:border-white/10 hover:border-blue-300 dark:hover:border-blue-500/50 transition-colors">
-                        <div className="flex items-center gap-3">
-                            <div className="w-12 h-12 rounded-lg flex items-center justify-center text-white bg-blue-600 dark:bg-blue-500">
+                    <div key={checkOut.id} className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 rounded-lg border border-gray-200 dark:border-white/10 hover:border-blue-300 dark:hover:border-blue-500/50 transition-colors">
+                        {/* Guest and room info - Full width on mobile, flex on desktop */}
+                        <div className="flex items-center gap-3 mb-4 sm:mb-0 w-full sm:w-auto">
+                            <div className="w-12 h-12 rounded-lg flex items-center justify-center text-white bg-blue-600 dark:bg-blue-500 flex-shrink-0">
                                 <Home size={20} />
                             </div>
-                            <div>
-                                <h4 className="font-sans font-medium text-gray-900 dark:text-white">
+                            <div className="min-w-0 flex-1">
+                                <h4 className="font-sans font-medium text-gray-900 dark:text-white truncate">
                                     {checkOut.guest}
                                 </h4>
-                                <p className="text-sm font-sans text-gray-600 dark:text-gray-400">
+                                <p className="text-sm font-sans text-gray-600 dark:text-gray-400 truncate">
                                     {checkOut.room}
                                 </p>
                             </div>
                         </div>
-                        <div className="text-right">
-                            <div className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-mono font-medium mb-1 ${checkOut.status === 'checked-out'
-                                ? 'bg-gray-100 text-gray-800 dark:bg-white/10 dark:text-gray-400'
-                                : checkOut.status === 'active'
-                                    ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
-                                    : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400'
-                                }`}>
-                                {checkOut.status === 'checked-out' ? (
-                                    <XCircle size={12} />
-                                ) : checkOut.status === 'active' ? (
-                                    <CheckCircle size={12} />
-                                ) : (
-                                    <Clock size={12} />
-                                )}
-                                {checkOut.status === 'checked-out' ? 'Checked Out' :
-                                    checkOut.status === 'active' ? 'Active' : 'Pending'}
+
+                        {/* Status and check-out time */}
+                        <div className="flex items-center justify-between sm:justify-end gap-4 sm:gap-6 mb-4 sm:mb-0 w-full sm:w-auto">
+                            <div className="flex flex-col items-start sm:items-end">
+                                <div className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-mono font-medium mb-1 ${checkOut.status === 'checked-out'
+                                    ? 'bg-gray-100 text-gray-800 dark:bg-white/10 dark:text-gray-400'
+                                    : checkOut.status === 'active'
+                                        ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
+                                        : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400'
+                                    }`}>
+                                    {checkOut.status === 'checked-out' ? (
+                                        <XCircle size={12} />
+                                    ) : checkOut.status === 'active' ? (
+                                        <CheckCircle size={12} />
+                                    ) : (
+                                        <Clock size={12} />
+                                    )}
+                                    {checkOut.status === 'checked-out' ? 'Checked Out' :
+                                        checkOut.status === 'active' ? 'Active' : 'Pending'}
+                                </div>
+                                <div className="text-left sm:text-right">
+                                    <p className="text-xs font-sans text-gray-500 dark:text-gray-400">Check-out</p>
+                                    <p className="text-sm font-sans font-medium text-gray-900 dark:text-white">
+                                        {checkOut.checkOut}
+                                    </p>
+                                </div>
                             </div>
-                            <div>
-                                <p className="text-xs font-sans text-gray-500 dark:text-gray-400">Check-out</p>
-                                <p className="text-sm font-sans font-medium text-gray-900 dark:text-white">
-                                    {checkOut.checkOut}
+
+                            {/* Total amount */}
+                            <div className="text-left sm:text-right">
+                                <p className="text-xs font-sans text-gray-500 dark:text-gray-400">Total</p>
+                                <p className="text-lg font-serif font-bold text-gray-900 dark:text-white">
+                                    {checkOut.total}
                                 </p>
                             </div>
                         </div>
-                        <div className="text-right">
-                            <p className="text-xs font-sans text-gray-500 dark:text-gray-400">Total</p>
-                            <p className="text-lg font-serif font-bold text-gray-900 dark:text-white">
-                                {checkOut.total}
-                            </p>
+
+                        {/* More options button */}
+                        <div className="self-end sm:self-center mt-4 sm:mt-0">
+                            <button className="p-2 rounded-lg transition-colors hover:bg-gray-100 dark:hover:bg-white/5 text-gray-900 dark:text-white">
+                                <MoreVertical size={18} />
+                            </button>
                         </div>
-                        <button className="p-2 rounded-lg transition-colors hover:bg-gray-100 dark:hover:bg-white/5 text-gray-900 dark:text-white">
-                            <MoreVertical size={18} />
-                        </button>
                     </div>
                 ))}
             </div>
