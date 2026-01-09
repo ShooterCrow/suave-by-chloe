@@ -118,7 +118,7 @@ const Location = () => {
     };
 
     return (
-        <div className="min-h-screen pt-28 pb-16 px-4 md:px-8 bg-gray-50 dark:bg-gray-900">
+        <div className="min-h-screen pt-28 pb-16 px-4 md:px-8 bg-gray-50 dark:bg-void">
             <Helmet>
                 <title>Location & Directions | Suave By Chloe</title>
                 <meta

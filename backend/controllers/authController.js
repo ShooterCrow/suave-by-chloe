@@ -146,7 +146,6 @@ const signup = asyncHandler(async (req, res) => {
 // @route   POST /api/auth/login
 // @access  Public
 const login = asyncHandler(async (req, res) => {
-  console.log(req.body);
   const { email, password } = req.body;
   if (!email || !password) {
     return res.status(400).json({ message: "All fields are required" });
@@ -199,7 +198,7 @@ const login = asyncHandler(async (req, res) => {
 
   res.cookie("jwt", refreshToken, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
+    secure: true, // Required for SameSite: 'None'
     sameSite: "None",
     maxAge: 7 * 24 * 60 * 60 * 1000,
   });
@@ -224,7 +223,6 @@ const login = asyncHandler(async (req, res) => {
 // @access  Public
 const refresh = asyncHandler(async (req, res) => {
   const cookies = req.cookies;
-  console.log(cookies);
   if (!cookies?.jwt) return res.status(401).json({ message: "Unauthorized" });
 
   const refreshToken = cookies.jwt;

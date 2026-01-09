@@ -19,7 +19,7 @@ exports.protect = asyncHandler(async (req, res, next) => {
   // Make sure token exists
   if (!token) {
     res.status(401);
-    throw new Error("Not authorized to access this route");
+    throw new Error("Not authorized, no token");
   }
 
   try {
@@ -33,15 +33,10 @@ exports.protect = asyncHandler(async (req, res, next) => {
       throw new Error("User not found");
     }
 
-    if (!req.user.emailVerified) {
-      // Optional: Enforce email verification at middleware level if needed
-      // This depends on the specific route requirements
-    }
-
     next();
   } catch (err) {
-    res.status(401);
-    throw new Error("Not authorized to access this route");
+    res.status(403); // 👈 Trigger refresh on frontend
+    throw new Error("Access token expired or invalid");
   }
 });
 

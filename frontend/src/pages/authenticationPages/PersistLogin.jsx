@@ -46,12 +46,11 @@ const PersistLogin = () => {
         return <Outlet />;
     }
 
-    // If still loading (during token refresh), show loader
-    if (isLoading && (pathname.includes("dashboard") || pathname.includes("admin"))) {
+    // While refreshing, show loader
+    if (isLoading && !token) {
         return <Loader />;
     }
 
-    // Render the protected content
     return <Outlet />;
 };
 

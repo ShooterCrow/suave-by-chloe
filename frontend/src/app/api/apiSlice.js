@@ -20,24 +20,24 @@ const baseQuery = fetchBaseQuery({
 const baseQueryWithReauth = async (args, api, extraOptions) => {
   let result = await baseQuery(args, api, extraOptions);
 
-  if (result?.error?.status === 401) {
+  // If 403 Forbidden (Access token expired)
+  // AND we are not already trying to refresh (prevents infinite loop)
+  if (result?.error?.status === 403 && args.url !== "/auth/refresh") {
+    console.log("Access token expired, attempting refresh...");
+
     // Try to get a new token
     const refreshResult = await baseQuery("/auth/refresh", api, extraOptions);
 
     if (refreshResult?.data) {
-      // Store the new token
+      console.log("Refresh successful, retrying original request.");
+      // Store the new token + user data
       api.dispatch(setCredentials({ ...refreshResult.data }));
       // Retry the original query with new token
       result = await baseQuery(args, api, extraOptions);
     } else {
-      // If refresh fails, handle logout here
-      if (refreshResult?.error?.status === 403) {
-        refreshResult.error.data.message = "Your login has expired.";
-      }
+      console.log("Refresh failed, clearing credentials.");
       api.dispatch(clearCredentials());
-      // Redirect to login page using window.location
-      window.location.href = "/login";
-      return refreshResult;
+      // No hard reload here - let RequireAuth or PersistLogin handle it
     }
   }
   return result;
