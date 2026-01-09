@@ -1348,41 +1348,42 @@ const AdminSettings = () => {
                         ADMIN_SETTINGS
                     </span>
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                        <div>
-                            <h1 className="font-serif text-3xl font-bold text-gray-900 dark:text-white mb-2">
+                        <div className="min-w-0">
+                            <h1 className="font-serif text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-2">
                                 Hotel Settings
                             </h1>
-                            <p className="font-sans text-gray-600 dark:text-gray-400">
+                            <p className="font-sans text-sm sm:text-base text-gray-600 dark:text-gray-400">
                                 Configure hotel information, policies, and system settings
                             </p>
                         </div>
-                        <div className="flex items-center gap-3">
+                        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
                             <Button
                                 onClick={handleBackup}
                                 variant="secondary"
-                                className="flex items-center gap-2"
+                                className="flex items-center gap-2 text-sm sm:text-base px-3 sm:px-4"
                             >
-                                <Download size={18} />
-                                Backup
+                                <Download size={16} className="sm:w-[18px] sm:h-[18px]" />
+                                <span className="hidden sm:inline">Backup</span>
                             </Button>
                             <Button
                                 onClick={handleRestore}
                                 variant="secondary"
-                                className="flex items-center gap-2"
+                                className="flex items-center gap-2 text-sm sm:text-base px-3 sm:px-4"
                             >
-                                <Upload size={18} />
-                                Restore
+                                <Upload size={16} className="sm:w-[18px] sm:h-[18px]" />
+                                <span className="hidden sm:inline">Restore</span>
                             </Button>
                             <Button
                                 onClick={handleSaveAll}
-                                disabled={isUpdating}
                                 isLoading={isUpdating}
-                                className="px-6 py-2 flex items-center gap-2"
+                                disabled={isUpdating}
+                                className="px-4 sm:px-6 py-2 flex items-center gap-2 text-sm sm:text-base"
                             >
                                 {!isUpdating && (
                                     <>
-                                        <Save size={18} />
-                                        Save All Changes
+                                        <Save size={16} className="sm:w-[18px] sm:h-[18px]" />
+                                        <span className="hidden sm:inline">Save All Changes</span>
+                                        <span className="sm:hidden">Save All</span>
                                     </>
                                 )}
                             </Button>
@@ -1401,13 +1402,13 @@ const AdminSettings = () => {
                                         <button
                                             key={section.id}
                                             onClick={() => setActiveSection(section.id)}
-                                            className={`px-4 py-3 rounded-lg font-sans font-medium transition-all flex items-center gap-2 ${activeSection === section.id
+                                            className={`px-3 sm:px-4 py-2 sm:py-3 rounded-lg font-sans text-sm sm:text-base font-medium transition-all flex items-center gap-2 whitespace-nowrap ${activeSection === section.id
                                                 ? 'bg-blue-600 dark:bg-blue-500 text-white'
                                                 : 'bg-gray-100 dark:bg-white/5 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-white/10'
                                                 }`}
                                         >
-                                            <Icon size={18} />
-                                            {section.label}
+                                            <Icon size={16} className="sm:w-[18px] sm:h-[18px] flex-shrink-0" />
+                                            <span className="truncate">{section.label}</span>
                                         </button>
                                     );
                                 })}
