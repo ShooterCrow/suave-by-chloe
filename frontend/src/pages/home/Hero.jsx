@@ -23,7 +23,7 @@ const Hero = () => {
             {/* Background Image with Overlay */}
             <div className="absolute inset-0">
                 <img
-                    src="https://hb-gs.vercel.app/assets/heroImage-C_C6vYe5.png"
+                    src="/hero.png"
                     alt="Luxury Hotel"
                     className="w-full h-full object-cover"
                 />
