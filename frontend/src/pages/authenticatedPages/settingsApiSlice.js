@@ -7,30 +7,38 @@ export const settingsApiSlice = apiSlice.injectEndpoints({
       providesTags: ["Settings"],
       transformResponse: (response) => response.data,
     }),
+
     updateSettings: builder.mutation({
-      query: (settings) => ({
-        url: "/settings",
-        method: "PUT",
-        body: settings,
-      }),
+      query: ({ hotelInfo, logo, gallery }) => {
+        // Create FormData for file uploads
+        const formData = new FormData();
+
+        // Add hotelInfo as JSON string if it exists
+        if (hotelInfo) {
+          formData.append("hotelInfo", JSON.stringify(hotelInfo));
+        }
+
+        // Add logo file if provided
+        if (logo) {
+          formData.append("logo", logo);
+        }
+
+        // Add gallery files if provided
+        if (gallery && gallery.length > 0) {
+          gallery.forEach((file, index) => {
+            formData.append("gallery", file);
+          });
+        }
+
+        return {
+          url: "/settings",
+          method: "PUT",
+          body: formData,
+        };
+      },
       invalidatesTags: ["Settings"],
     }),
-    uploadLogo: builder.mutation({
-      query: (formData) => ({
-        url: "/settings/upload-logo",
-        method: "POST",
-        body: formData,
-      }),
-      invalidatesTags: ["Settings"],
-    }),
-    uploadGalleryImages: builder.mutation({
-      query: (formData) => ({
-        url: "/settings/gallery",
-        method: "POST",
-        body: formData,
-      }),
-      invalidatesTags: ["Settings"],
-    }),
+
     deleteGalleryImage: builder.mutation({
       query: (publicId) => ({
         url: `/settings/gallery/${publicId}`,
@@ -44,7 +52,5 @@ export const settingsApiSlice = apiSlice.injectEndpoints({
 export const {
   useGetSettingsQuery,
   useUpdateSettingsMutation,
-  useUploadLogoMutation,
-  useUploadGalleryImagesMutation,
   useDeleteGalleryImageMutation,
 } = settingsApiSlice;

@@ -2,7 +2,7 @@ import React, { useRef } from 'react';
 
 
 
-const SpotlightCard = ({ children, className = "" }) => {
+const SpotlightCard = ({ children, className = "", onClick }) => {
     const divRef = useRef(null);
 
     const handleMouseMove = (e) => {
@@ -21,6 +21,7 @@ const SpotlightCard = ({ children, className = "" }) => {
         <div
             ref={divRef}
             onMouseMove={handleMouseMove}
+            onClick={onClick}
             className={`
                 relative bg-white dark:bg-panel border border-gray-200 dark:border-white/5 rounded-2xl overflow-hidden
                 before:content-[''] before:absolute before:inset-0 before:rounded-[inherit] before:border before:border-transparent before:z-[2] before:opacity-0 before:transition-opacity before:duration-500 hover:before:opacity-100

@@ -12,6 +12,9 @@ const PersistLogin = () => {
     const [persist] = usePersist();
     const { pathname } = useLocation()
 
+    const publicRoutes = ['/', '/login', '/register', '/rooms', '/about', '/contact', '/location', '/gallery', '/policies'];
+    const isPublicRoute = publicRoutes.some(route => pathname === route || pathname.startsWith('/rooms/'));
+
     useEffect(() => {
         let isMounted = true;
 
@@ -42,13 +45,13 @@ const PersistLogin = () => {
     }, [token, persist, refresh]); // Added missing dependencies
 
     // If persistence is disabled, render content immediately
-    if (!persist) {
+    if (!persist || isPublicRoute) {
         return <Outlet />;
     }
 
     // While refreshing, show loader
     if (isLoading && !token) {
-        return <Loader />;
+        return <Loader bg={false} />;
     }
 
     return <Outlet />;

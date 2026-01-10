@@ -124,7 +124,7 @@ const Gallery = () => {
     }, [lightboxOpen, currentIndex]);
 
     return (
-        <div className="min-h-screen pt-28 pb-16 bg-gray-50 dark:bg-gray-900">
+        <div className="min-h-screen pt-28 pb-16 bg-gray-50 dark:bg-void">
             <Helmet>
                 <title>Gallery | Suave By Chloe</title>
                 <meta
