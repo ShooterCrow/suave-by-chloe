@@ -5,6 +5,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useLogoutMutation } from '../../pages/authenticationPages/authApiSlice';
 import { useGetMeQuery } from '../../pages/authenticatedPages/userApiSlice';
 import useAuth from '../../hooks/useAuth';
+import { useGetSettingsQuery } from '../../pages/authenticatedPages/settingsApiSlice';
 
 const Header = () => {
     const { isDarkMode, toggleDarkMode } = useTheme();
@@ -15,6 +16,8 @@ const Header = () => {
     const { isLoggedIn, isAdmin: isAdminState } = useAuth()
     const navigate = useNavigate()
     const { data: currentUser } = useGetMeQuery(undefined, { skip: !isLoggedIn })
+    const capitalize = (str) => str.charAt(0).toUpperCase() + str.slice(1);
+    const { data: settings, isLoading: isSettingsLoading, isError: isSettingsError, error: settingsError, refetch: refetchSettings } = useGetSettingsQuery();
 
     const handleLogout = async () => {
         try {
@@ -92,7 +95,26 @@ const Header = () => {
                     `}>
                         {/* Logo/Admin Branding */}
                         <Link to={"/"} className="flex relative items-center gap-2 group z-50">
-                            <img src="/log.png" alt="Logo" width={150} />
+                            {settings?.hotelInfo?.logo?.url ? (
+                                <div className="relative w-25 h-7 md:w-27 md:h-8 lg:w-28 lg:h-9 overflow-hidden">
+                                    <img
+                                        src={settings.hotelInfo.logo.url}
+                                        alt={settings.hotelInfo.name || "Hotel Logo"}
+                                        className="w-full h-full object-contain"
+                                        // Optional: Add loading state or fallback
+                                        onError={(e) => {
+                                            e.target.onerror = null;
+                                            e.target.src = "/logo-placeholder.png";
+                                        }}
+                                    />
+                                </div>
+                            ) : (
+                                <div className="relative w-25 h-7 md:w-27 md:h-8 lg:w-28 lg:h-9 bg-gray-100 flex items-center justify-center rounded">
+                                    <span className="text-gray-400 font-semibold text-lg">
+                                        {settings?.hotelInfo?.name?.charAt(0) || "H"}
+                                    </span>
+                                </div>
+                            )}
                             {/* {isAdminState && <p className='absolute -top-3 right-0 bg-green-300 px-1 py-0.3 rounded font-mono text-xs text-gray-600'>Admin</p>} */}
                         </Link>
 
@@ -156,14 +178,14 @@ const Header = () => {
                                         >
                                             <div className="hidden md:block text-right">
                                                 <p className="text-sm font-sans font-semibold text-gray-900 dark:text-white">
-                                                    {currentUser?.name || 'Admin User'}
+                                                    {currentUser?.firstName || 'Admin User'}
                                                 </p>
                                                 <p className="text-xs font-sans text-gray-500 dark:text-gray-400">
-                                                    {currentUser?.role === 'admin' ? 'Hotel Manager' : currentUser?.role || 'User'}
+                                                    {currentUser?.roles.map(capitalize).join(", ")}
                                                 </p>
                                             </div>
                                             <div className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold bg-blue-600 dark:bg-blue-500">
-                                                {currentUser?.name ? currentUser.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) : 'AD'}
+                                                {currentUser?.firstName ? currentUser.firstName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) : 'AD'}
                                             </div>
                                         </button>
 
@@ -178,7 +200,7 @@ const Header = () => {
                                                 >
                                                     <div className="flex items-center gap-2">
                                                         <User size={14} className="text-gray-400" />
-                                                        <p className="text-sm font-medium text-gray-900 dark:text-white">{currentUser?.name || 'Admin User'}</p>
+                                                        <p className="text-sm font-medium text-gray-900 dark:text-white">{currentUser?.firstName || 'Admin User'}</p>
                                                     </div>
                                                     <p className="text-xs text-gray-500 dark:text-gray-400 ml-5">{currentUser?.email || 'admin@hotel.com'}</p>
                                                 </Link>

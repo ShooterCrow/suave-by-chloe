@@ -107,8 +107,8 @@ const AdminSettings = () => {
         { id: 'email-templates', label: 'Email Templates', icon: MailIcon },
         { id: 'users', label: 'Users & Permissions', icon: Users },
         { id: 'security', label: 'Security', icon: Lock },
-        { id: 'integrations', label: 'Integrations', icon: Code },
-        { id: 'appearance', label: 'Appearance', icon: Palette }
+        // { id: 'integrations', label: 'Integrations', icon: Code },
+        // { id: 'appearance', label: 'Appearance', icon: Palette }
     ];
 
     const handleSaveAll = () => {
