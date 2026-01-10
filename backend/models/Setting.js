@@ -97,6 +97,16 @@ const settingSchema = new mongoose.Schema(
           format: String,
         },
       ],
+      coordinates: {
+        lat: {
+          type: Number,
+          default: 9.155,
+        },
+        lng: {
+          type: Number,
+          default: 7.3221,
+        },
+      },
       // Singleton enforcer
       isSingleton: {
         type: Number,

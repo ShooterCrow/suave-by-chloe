@@ -1,50 +1,26 @@
 import React, { useState } from 'react';
 import { MapPin, Phone, Mail, Clock, Navigation, Car, Train, Plane, Copy, Check, ExternalLink } from 'lucide-react';
 import { Helmet } from 'react-helmet-async';
-
-// SpotlightCard Component
-const SpotlightCard = ({ children, className = "" }) => {
-    const cardRef = React.useRef(null);
-    const [mousePosition, setMousePosition] = React.useState({ x: 0, y: 0 });
-    const [isHovering, setIsHovering] = React.useState(false);
-
-    const handleMouseMove = (e) => {
-        if (!cardRef.current) return;
-        const rect = cardRef.current.getBoundingClientRect();
-        setMousePosition({
-            x: e.clientX - rect.left,
-            y: e.clientY - rect.top,
-        });
-    };
-
-    return (
-        <div
-            ref={cardRef}
-            onMouseMove={handleMouseMove}
-            onMouseEnter={() => setIsHovering(true)}
-            onMouseLeave={() => setIsHovering(false)}
-            className={`relative overflow-hidden rounded-xl border ${className}`}
-            style={{
-                background: isHovering
-                    ? `radial-gradient(600px circle at ${mousePosition.x}px ${mousePosition.y}px, rgba(59, 130, 246, 0.15), transparent 40%)`
-                    : 'transparent',
-            }}
-        >
-            {children}
-        </div>
-    );
-};
+import SpotlightCard from '../../components/ui/SpotlightCard';
+import { useGetSettingsQuery } from '../authenticatedPages/settingsApiSlice';
+import Loader from '../../components/ui/Loader';
 
 const Location = () => {
     const [copiedItem, setCopiedItem] = useState(null);
 
-    const hotelInfo = {
+    // Fetch hotel settings from backend
+    const { data: settings, isLoading, isError } = useGetSettingsQuery();
+
+    // Extract hotel info from settings, with fallback to defaults
+    const hotelInfo = settings?.hotelInfo || {
         address: "Kubwa, Abuja, Nigeria",
         phone: "+234 800 123 4567",
         email: "reservations@suavebychloe.com",
         hours: "24/7 Front Desk",
         coordinates: { lat: 9.1550, lng: 7.3221 }
     };
+
+    const mapEmbedUrl = `https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d15752.545!2d${hotelInfo.coordinates.lng}!3d${hotelInfo.coordinates.lat}!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x104e760c00000001%3A0x0!2s${encodeURIComponent(hotelData.location)}!5e0!3m2!1s${hotelData.language}!2s${hotelData.country}!4v1234567890123!5m2!1s${hotelData.language}!2s${hotelData.country}`;
 
     const transportOptions = [
         {
@@ -146,14 +122,13 @@ const Location = () => {
                         We're located in the heart of Kubwa, Abuja, offering a perfect blend of urban convenience and serene comfort.
                     </p>
                 </div>
-
                 {/* Map Section */}
                 <SpotlightCard className="mb-12 overflow-hidden bg-white dark:bg-gray-800 border-gray-300 dark:border-white/10">
                     <div className="relative w-full h-[400px] md:h-[500px] bg-gray-200 dark:bg-gray-700">
                         {/* Placeholder for map - Replace with actual map component */}
                         <iframe
                             title="Hotel Location Map"
-                            src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d15752.545!2d7.3221!3d9.1550!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x104e760c00000001%3A0x0!2sKubwa%2C+Abuja!5e0!3m2!1sen!2sng!4v1234567890123!5m2!1sen!2sng"
+                            src={mapEmbedUrl}
                             width="100%"
                             height="100%"
                             style={{ border: 0 }}

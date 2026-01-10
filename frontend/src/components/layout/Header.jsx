@@ -97,7 +97,7 @@ const Header = () => {
                         </Link>
 
                         {/* Desktop Navigation */}
-                        {!isAdminState ? (
+                        {!isAdminState || !location.pathname.includes("admin") ? (
                             // Guest Navigation
                             <nav className="hidden md:flex items-center gap-8">
                                 {guestNavLinks.map((link) => (

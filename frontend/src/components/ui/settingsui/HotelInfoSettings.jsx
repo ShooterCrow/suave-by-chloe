@@ -30,7 +30,8 @@ const HotelInfoSettings = ({ data, onUpdate, isSaving }) => {
         totalRooms: 0,
         starRating: 0,
         logo: { url: '', publicId: '' },
-        gallery: []
+        gallery: [],
+        coordinates: { lat: 0, lng: 0 }
     });
 
     const [logoFile, setLogoFile] = useState(null);
@@ -319,6 +320,61 @@ const HotelInfoSettings = ({ data, onUpdate, isSaving }) => {
                                 <option value="GBP">British Pound (£)</option>
                                 <option value="CAD">Canadian Dollar (C$)</option>
                             </select>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Location Coordinates */}
+                <div>
+                    <h4 className="font-serif text-lg font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" />
+                            <circle cx="12" cy="10" r="3" />
+                        </svg>
+                        Location Coordinates
+                    </h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label className="block text-sm font-sans font-medium text-gray-900 dark:text-white mb-2">
+                                Latitude
+                            </label>
+                            <Input
+                                type="number"
+                                step="0.000001"
+                                value={hotelInfo.coordinates?.lat || ''}
+                                onChange={(e) => setHotelInfo({
+                                    ...hotelInfo,
+                                    coordinates: {
+                                        ...hotelInfo.coordinates,
+                                        lat: parseFloat(e.target.value) || 0
+                                    }
+                                })}
+                                placeholder="e.g., 9.1550"
+                            />
+                            <p className="text-xs font-sans text-gray-500 dark:text-gray-400 mt-1">
+                                Used for map location display
+                            </p>
+                        </div>
+                        <div>
+                            <label className="block text-sm font-sans font-medium text-gray-900 dark:text-white mb-2">
+                                Longitude
+                            </label>
+                            <Input
+                                type="number"
+                                step="0.000001"
+                                value={hotelInfo.coordinates?.lng || ''}
+                                onChange={(e) => setHotelInfo({
+                                    ...hotelInfo,
+                                    coordinates: {
+                                        ...hotelInfo.coordinates,
+                                        lng: parseFloat(e.target.value) || 0
+                                    }
+                                })}
+                                placeholder="e.g., 7.3221"
+                            />
+                            <p className="text-xs font-sans text-gray-500 dark:text-gray-400 mt-1">
+                                Used for map location display
+                            </p>
                         </div>
                     </div>
                 </div>
