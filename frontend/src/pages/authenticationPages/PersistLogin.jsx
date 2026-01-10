@@ -51,7 +51,7 @@ const PersistLogin = () => {
 
     // While refreshing, show loader
     if (isLoading && !token) {
-        return <Loader bg={false} />;
+        return <Loader />;
     }
 
     return <Outlet />;

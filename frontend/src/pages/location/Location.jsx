@@ -20,8 +20,6 @@ const Location = () => {
         coordinates: { lat: 9.1550, lng: 7.3221 }
     };
 
-    const mapEmbedUrl = `https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d15752.545!2d${hotelInfo.coordinates.lng}!3d${hotelInfo.coordinates.lat}!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x104e760c00000001%3A0x0!2s${encodeURIComponent(hotelData.location)}!5e0!3m2!1s${hotelData.language}!2s${hotelData.country}!4v1234567890123!5m2!1s${hotelData.language}!2s${hotelData.country}`;
-
     const transportOptions = [
         {
             icon: Plane,
@@ -122,13 +120,14 @@ const Location = () => {
                         We're located in the heart of Kubwa, Abuja, offering a perfect blend of urban convenience and serene comfort.
                     </p>
                 </div>
+
                 {/* Map Section */}
                 <SpotlightCard className="mb-12 overflow-hidden bg-white dark:bg-gray-800 border-gray-300 dark:border-white/10">
                     <div className="relative w-full h-[400px] md:h-[500px] bg-gray-200 dark:bg-gray-700">
                         {/* Placeholder for map - Replace with actual map component */}
                         <iframe
                             title="Hotel Location Map"
-                            src={mapEmbedUrl}
+                            src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d15752.545!2d7.3221!3d9.1550!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x104e760c00000001%3A0x0!2sKubwa%2C+Abuja!5e0!3m2!1sen!2sng!4v1234567890123!5m2!1sen!2sng"
                             width="100%"
                             height="100%"
                             style={{ border: 0 }}
