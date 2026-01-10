@@ -18,7 +18,7 @@ const {
   bulkUpdateRooms,
 } = require("../controllers/roomController");
 
-const upload = require("../config/multer");
+const upload = require("../config/multer"); // This returns the wrapper function
 const { protect, admin } = require("../middleware/auth");
 
 const router = express.Router();
@@ -33,21 +33,40 @@ router.get("/:identifier", getRoomById); // Matches ID or slug
 // Admin Routes (Should be protected)
 router.get("/admin/all", protect, admin, getAllRoomsAdmin);
 router.get("/admin/:id/stats", protect, admin, getRoomStats);
-router.post("/", createRoom);
-router.put("/:id", protect, admin, updateRoom);
+
+// Create room route - FIXED: Added upload middleware
+router.post(
+  "/",
+  protect,
+  admin,
+  upload([{ name: "images", maxCount: 10 }]),
+  createRoom
+);
+
+// Update room route - FIXED: Added upload middleware
+router.put(
+  "/:id",
+  protect,
+  admin,
+  upload([{ name: "images", maxCount: 10 }]),
+  updateRoom
+);
+
 router.delete("/:id", protect, admin, deleteRoom);
 router.patch("/bulk-update", protect, admin, bulkUpdateRooms);
 router.patch("/:id/toggle-status", protect, admin, toggleRoomStatus);
 router.patch("/:id/toggle-featured", protect, admin, toggleFeaturedStatus);
 
-// Image Routes
+// Image Routes - FIXED: Updated to use the wrapper function
 router.post(
   "/:id/images",
   protect,
   admin,
-  upload.array("images", 10),
+  upload([{ name: "images", maxCount: 10 }]), // Using the wrapper function
   uploadRoomImages
 );
+
+// These routes don't need upload middleware since they're not handling file uploads
 router.put("/:id/images/:imageId", protect, admin, updateRoomImage);
 router.delete("/:id/images/:imageId", protect, admin, deleteRoomImage);
 

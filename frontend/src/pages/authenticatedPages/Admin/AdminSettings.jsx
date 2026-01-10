@@ -52,6 +52,7 @@ const AdminSettings = () => {
 
     // Handle setting updates from child components
     const handleUpdate = async ({ hotelInfo, logo, gallery, taxesAndFees, policies, emailTemplates }) => {
+        alert()
         try {
             // Prepare update data based on what's being updated
             const updateData = {};
