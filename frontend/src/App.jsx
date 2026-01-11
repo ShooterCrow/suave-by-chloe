@@ -1,5 +1,5 @@
 import React from 'react'
-import { Route, Routes } from 'react-router-dom'
+import { Route, Routes, ScrollRestoration } from 'react-router-dom'
 import Layout from './components/layout/Layout'
 import HomePage from './pages/home/HomePage'
 import Rooms from './pages/rooms/Rooms'
@@ -30,6 +30,7 @@ const App = () => {
   return (
     <div>
       <ThemeProvider>
+        <ScrollRestoration />
         <Routes>
           <Route element={<PersistLogin />}>
             <Route path='/' element={<Layout />}>
