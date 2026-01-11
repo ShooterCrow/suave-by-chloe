@@ -1,5 +1,6 @@
 import React from 'react';
 import { ArrowRight } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 
 // SpotlightCard Component
@@ -81,56 +82,59 @@ const RoomHighlights = () => {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                     {rooms.map((room) => (
-                        <SpotlightCard
-                            key={room.id}
-                            className="h-[500px] group cursor-pointer border-gray-200 bg-white dark:border-white/10 dark:bg-void transition-colors duration-300"
-                        >
-                            {/* Image Background */}
-                            <img
-                                src={room.image}
-                                alt={room.name}
-                                className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-                            />
+                        <Link
+                            to={`/rooms/${room.id}`}
+                            key={room.id}>
+                            <SpotlightCard
+                                className="h-[500px] group cursor-pointer border-gray-200 bg-white dark:border-white/10 dark:bg-void transition-colors duration-300"
+                            >
+                                {/* Image Background */}
+                                <img
+                                    src={room.image}
+                                    alt={room.name}
+                                    className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                                />
 
-                            {/* Bottom 40% Gradient Overlay */}
-                            <div
-                                className="absolute inset-0 transition-opacity duration-300 
+                                {/* Bottom 40% Gradient Overlay */}
+                                <div
+                                    className="absolute inset-0 transition-opacity duration-300 
                                     bg-gradient-to-t from-white via-white/85 to-transparent group-hover:from-white group-hover:via-white/95 
                                     dark:from-void dark:via-void/80 dark:to-transparent dark:group-hover:from-void dark:group-hover:via-void/90"
-                                style={{
-                                    maskImage: 'linear-gradient(to top, black 0%, black 40%, transparent 100%)',
-                                    WebkitMaskImage: 'linear-gradient(to top, black 0%, black 40%, transparent 100%)'
-                                }}
-                            />
+                                    style={{
+                                        maskImage: 'linear-gradient(to top, black 0%, black 40%, transparent 100%)',
+                                        WebkitMaskImage: 'linear-gradient(to top, black 0%, black 40%, transparent 100%)'
+                                    }}
+                                />
 
-                            {/* Content */}
-                            <div className="absolute bottom-0 left-0 w-full p-8 translate-y-2 group-hover:translate-y-0 transition-transform duration-300">
-                                <h3 className="font-serif text-2xl mb-2 drop-shadow-lg text-gray-900 dark:text-white transition-colors duration-300">
-                                    {room.name}
-                                </h3>
-                                <div className="flex items-center gap-2 mb-4">
-                                    <span className="font-mono text-xl text-blue-600 dark:text-blue-400 drop-shadow-lg">
-                                        {room.price}
-                                    </span>
-                                    <span className="text-sm font-sans drop-shadow-lg text-gray-700 dark:text-gray-300 transition-colors duration-300">
-                                        / night
-                                    </span>
-                                </div>
+                                {/* Content */}
+                                <div className="absolute bottom-0 left-0 w-full p-8 translate-y-2 group-hover:translate-y-0 transition-transform duration-300">
+                                    <h3 className="font-serif text-2xl mb-2 drop-shadow-lg text-gray-900 dark:text-white transition-colors duration-300">
+                                        {room.name}
+                                    </h3>
+                                    <div className="flex items-center gap-2 mb-4">
+                                        <span className="font-mono text-xl text-blue-600 dark:text-blue-400 drop-shadow-lg">
+                                            {room.price}
+                                        </span>
+                                        <span className="text-sm font-sans drop-shadow-lg text-gray-700 dark:text-gray-300 transition-colors duration-300">
+                                            / night
+                                        </span>
+                                    </div>
 
-                                <div className="space-y-2 mb-6">
-                                    {room.features.map((feature, i) => (
-                                        <div key={i} className="flex items-center gap-2 text-sm text-gray-800 dark:text-gray-200 transition-colors duration-300">
-                                            <div className="w-1.5 h-1.5 rounded-full bg-blue-500 shadow-blue-500/50 shadow-lg dark:bg-blue-400 dark:shadow-blue-400/50" />
-                                            <span className="font-sans drop-shadow-lg">{feature}</span>
-                                        </div>
-                                    ))}
-                                </div>
+                                    <div className="space-y-2 mb-6">
+                                        {room.features.map((feature, i) => (
+                                            <div key={i} className="flex items-center gap-2 text-sm text-gray-800 dark:text-gray-200 transition-colors duration-300">
+                                                <div className="w-1.5 h-1.5 rounded-full bg-blue-500 shadow-blue-500/50 shadow-lg dark:bg-blue-400 dark:shadow-blue-400/50" />
+                                                <span className="font-sans drop-shadow-lg">{feature}</span>
+                                            </div>
+                                        ))}
+                                    </div>
 
-                                <div className="flex items-center gap-2 font-mono text-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300 drop-shadow-lg text-gray-900 dark:text-white">
-                                    BOOK_NOW <ArrowRight size={16} />
+                                    <div className="flex items-center gap-2 font-mono text-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300 drop-shadow-lg text-gray-900 dark:text-white">
+                                        BOOK_NOW <ArrowRight size={16} />
+                                    </div>
                                 </div>
-                            </div>
-                        </SpotlightCard>
+                            </SpotlightCard>
+                        </Link>
                     ))}
                 </div>
 
