@@ -97,7 +97,7 @@ const Header = () => {
                         <Link to={"/"} className="flex relative items-center gap-2 group z-50">
                             <div className="relative w-25 h-7 md:w-27 md:h-8 lg:w-28 lg:h-9 overflow-hidden">
                                 <img
-                                    src="https://res.cloudinary.com/ddjxdvgd5/image/upload/branding/logo.png"
+                                    src="https://res.cloudinary.com/ddjxdvgd5/image/upload/f_auto,q_auto/branding/logo"
                                     alt={"Suave By Chloe Logo"}
                                     className="w-full h-full object-contain"
                                 />

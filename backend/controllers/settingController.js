@@ -18,6 +18,7 @@ const isValidImageFile = (file) => {
     "image/png",
     "image/webp",
     "image/gif",
+    "image/avif",
   ];
   const maxSize = 10 * 1024 * 1024; // 10MB
   return allowedTypes.includes(file.mimetype) && file.size <= maxSize;
@@ -245,9 +246,9 @@ const updateSettings = asyncHandler(async (req, res) => {
     setTimeout(async () => {
       try {
         // Delete old logo if replaced or removed
-        if ((newLogo || req.body?.removeLogo === "true") && oldLogo?.publicId) {
-          await cloudinary.uploader.destroy(oldLogo.publicId);
-        }
+        // if ((newLogo || req.body?.removeLogo === "true") && oldLogo?.publicId) {
+        //   await cloudinary.uploader.destroy(oldLogo.publicId);
+        // }
 
         // Delete removed gallery images
         const oldGalleryImages = settings.hotelInfo?.gallery || [];
@@ -277,13 +278,13 @@ const updateSettings = asyncHandler(async (req, res) => {
     console.error("Settings update error:", error);
 
     // Clean up uploaded files if update failed
-    if (newLogo?.publicId) {
-      try {
-        await cloudinary.uploader.destroy(newLogo.publicId);
-      } catch (cleanupError) {
-        console.error("Error cleaning up new logo:", cleanupError);
-      }
-    }
+    // if (newLogo?.publicId) {
+    //   try {
+    //     await cloudinary.uploader.destroy(newLogo.publicId);
+    //   } catch (cleanupError) {
+    //     console.error("Error cleaning up new logo:", cleanupError);
+    //   }
+    // }
 
     if (newGalleryImages.length > 0) {
       try {

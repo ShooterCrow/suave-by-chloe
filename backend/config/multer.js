@@ -51,16 +51,6 @@ const storage = new CloudinaryStorage({
     if (file.fieldname === "logo") {
       return {
         folder: "branding",
-        allowed_formats: [
-          "jpg",
-          "webp",
-          "png",
-          "jpeg",
-          "gif",
-          "mp4",
-          "pdf",
-          "avif",
-        ],
         public_id: "logo", // 🔥 FIXED ID
         overwrite: true,
         invalidate: true,
@@ -74,16 +64,6 @@ const storage = new CloudinaryStorage({
     } else if (file.fieldname === "heroImage") {
       return {
         folder: "branding",
-        allowed_formats: [
-          "jpg",
-          "webp",
-          "png",
-          "jpeg",
-          "gif",
-          "mp4",
-          "pdf",
-          "avif",
-        ],
         public_id: "heroImage", // 🔥 FIXED ID
         overwrite: true,
         invalidate: true,
@@ -99,16 +79,6 @@ const storage = new CloudinaryStorage({
     // Gallery uploads (can stay dynamic)
     return {
       folder: "uploads",
-      allowed_formats: [
-        "jpg",
-        "webp",
-        "png",
-        "jpeg",
-        "gif",
-        "mp4",
-        "pdf",
-        "avif",
-      ],
       resource_type: "auto",
     };
   },
@@ -130,6 +100,7 @@ const upload = multer({
       "image/png",
       "image/jpg",
       "image/gif",
+      "image/avif",
       "video/mp4",
       "application/pdf",
     ];
