@@ -35,6 +35,8 @@ const HotelInfoSettings = ({ data, onUpdate, isSaving }) => {
         coordinates: { lat: 0, lng: 0 }
     });
 
+    console.log(data?.logo?.url)
+
     // Logo state management (single image)
     const [logoFile, setLogoFile] = useState(null);
     const [logoPreview, setLogoPreview] = useState(data?.logo?.url || '');

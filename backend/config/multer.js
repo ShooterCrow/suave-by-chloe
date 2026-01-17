@@ -30,18 +30,87 @@ try {
   console.error("Cloudinary configuration error:", err.message);
 }
 
+// const storage = new CloudinaryStorage({
+//   cloudinary,
+//   params: {
+//     folder: "uploads",
+//     allowed_formats: ["jpg", "webp", "png", "jpeg", "gif", "mp4", "pdf", "avif"],
+//     resource_type: "auto", // IMPORTANT: This allows auto-detection of image/video
+//     // Add transformation options if needed
+//     transformation: [
+//       { width: 1000, height: 1000, crop: "limit" },
+//       { quality: "auto" },
+//       { fetch_format: "auto" },
+//     ],
+//   },
+// });
+
 const storage = new CloudinaryStorage({
   cloudinary,
-  params: {
-    folder: "uploads",
-    allowed_formats: ["jpg", "webp", "png", "jpeg", "gif", "mp4", "pdf"],
-    resource_type: "auto", // IMPORTANT: This allows auto-detection of image/video
-    // Add transformation options if needed
-    transformation: [
-      { width: 1000, height: 1000, crop: "limit" },
-      { quality: "auto" },
-      { fetch_format: "auto" },
-    ],
+  params: (req, file) => {
+    if (file.fieldname === "logo") {
+      return {
+        folder: "branding",
+        allowed_formats: [
+          "jpg",
+          "webp",
+          "png",
+          "jpeg",
+          "gif",
+          "mp4",
+          "pdf",
+          "avif",
+        ],
+        public_id: "logo", // 🔥 FIXED ID
+        overwrite: true,
+        invalidate: true,
+        resource_type: "image",
+        transformation: [
+          { width: 600, crop: "limit" },
+          { quality: "auto" },
+          { fetch_format: "auto" },
+        ],
+      };
+    } else if (file.fieldname === "heroImage") {
+      return {
+        folder: "branding",
+        allowed_formats: [
+          "jpg",
+          "webp",
+          "png",
+          "jpeg",
+          "gif",
+          "mp4",
+          "pdf",
+          "avif",
+        ],
+        public_id: "heroImage", // 🔥 FIXED ID
+        overwrite: true,
+        invalidate: true,
+        resource_type: "image",
+        transformation: [
+          { width: 1920, crop: "limit" },
+          { quality: "auto" },
+          { fetch_format: "auto" },
+        ],
+      };
+    }
+
+    // Gallery uploads (can stay dynamic)
+    return {
+      folder: "uploads",
+      allowed_formats: [
+        "jpg",
+        "webp",
+        "png",
+        "jpeg",
+        "gif",
+        "mp4",
+        "pdf",
+        "avif",
+      ],
+      resource_type: "auto",
+    };
   },
 });
 

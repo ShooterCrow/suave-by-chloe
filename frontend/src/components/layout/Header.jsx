@@ -95,26 +95,13 @@ const Header = () => {
                     `}>
                         {/* Logo/Admin Branding */}
                         <Link to={"/"} className="flex relative items-center gap-2 group z-50">
-                            {settings?.hotelInfo?.logo?.url ? (
-                                <div className="relative w-25 h-7 md:w-27 md:h-8 lg:w-28 lg:h-9 overflow-hidden">
-                                    <img
-                                        src={settings.hotelInfo.logo.url}
-                                        alt={settings.hotelInfo.name || "Hotel Logo"}
-                                        className="w-full h-full object-contain"
-                                        // Optional: Add loading state or fallback
-                                        onError={(e) => {
-                                            e.target.onerror = null;
-                                            e.target.src = "/logo-placeholder.png";
-                                        }}
-                                    />
-                                </div>
-                            ) : (
-                                <div className="relative w-25 h-7 md:w-27 md:h-8 lg:w-28 lg:h-9 bg-gray-100 flex items-center justify-center rounded">
-                                    <span className="text-gray-400 font-semibold text-lg">
-                                        {settings?.hotelInfo?.name?.charAt(0) || "H"}
-                                    </span>
-                                </div>
-                            )}
+                            <div className="relative w-25 h-7 md:w-27 md:h-8 lg:w-28 lg:h-9 overflow-hidden">
+                                <img
+                                    src="https://res.cloudinary.com/ddjxdvgd5/image/upload/branding/logo.png"
+                                    alt={"Suave By Chloe Logo"}
+                                    className="w-full h-full object-contain"
+                                />
+                            </div>
                             {/* {isAdminState && <p className='absolute -top-3 right-0 bg-green-300 px-1 py-0.3 rounded font-mono text-xs text-gray-600'>Admin</p>} */}
                         </Link>
 
