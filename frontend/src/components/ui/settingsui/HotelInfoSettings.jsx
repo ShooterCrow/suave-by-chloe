@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Save, Building, Phone, Upload, X, Clock, Camera } from 'lucide-react';
+import { Save, Building, Phone, Upload, X, Clock, Camera, MapPin } from 'lucide-react';
 import Button from '../Button';
 import Input from '../Input';
 import {
@@ -32,7 +32,8 @@ const HotelInfoSettings = ({ data, onUpdate, isSaving }) => {
         starRating: 0,
         logo: { url: '', publicId: '' },
         gallery: [],
-        coordinates: { lat: 0, lng: 0 }
+        coordinates: { lat: 0, lng: 0 },
+        googleEmbedLink: ''
     });
 
     // Logo state management (single image)
@@ -234,7 +235,8 @@ const HotelInfoSettings = ({ data, onUpdate, isSaving }) => {
                 currency: hotelInfo.currency || '',
                 totalRooms: hotelInfo.totalRooms || 0,
                 starRating: hotelInfo.starRating || 0,
-                coordinates: hotelInfo.coordinates || { lat: 0, lng: 0 }
+                coordinates: hotelInfo.coordinates || { lat: 0, lng: 0 },
+                googleEmbedLink: hotelInfo.googleEmbedLink || ''
             };
 
             // Append hotelInfo as JSON string
@@ -572,6 +574,30 @@ const HotelInfoSettings = ({ data, onUpdate, isSaving }) => {
                             />
                             <p className="text-xs font-sans text-gray-500 dark:text-gray-400 mt-1">
                                 Used for map location display
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Google Maps Embed Link */}
+                <div>
+                    <h4 className="font-serif text-lg font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                        <MapPin size={20} />
+                        Google Maps Embed Link
+                    </h4>
+                    <div className="space-y-4">
+                        <div>
+                            <label className="block text-sm font-sans font-medium text-gray-900 dark:text-white mb-2">
+                                Maps Embed URL
+                            </label>
+                            <Input
+                                type="text"
+                                value={hotelInfo.googleEmbedLink || ''}
+                                onChange={(e) => setHotelInfo({ ...hotelInfo, googleEmbedLink: e.target.value })}
+                                placeholder="e.g., https://www.google.com/maps/embed?pb=..."
+                            />
+                            <p className="text-xs font-sans text-gray-500 dark:text-gray-400 mt-1">
+                                Paste the 'src' value from the Google Maps embed code. This will override the coordinate-based map.
                             </p>
                         </div>
                     </div>

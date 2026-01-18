@@ -1,9 +1,11 @@
 import React from 'react';
 import { Facebook, Twitter, Instagram, Mail, MapPin, Phone, ArrowRight } from 'lucide-react';
+import { useGetSettingsQuery } from '../../pages/authenticatedPages/settingsApiSlice';
 
 
 const Footer = () => {
     const currentYear = new Date().getFullYear();
+    const { data: settings, isLoading: isSettingsLoading, isError: isSettingsError, error: settingsError, refetch: refetchSettings } = useGetSettingsQuery();
 
     return (
         <footer className="w-full pt-20 pb-8 px-4 md:px-8 border-t mt-auto border-gray-200 bg-white text-gray-600 dark:border-white/10 dark:bg-[#030304] dark:text-gray-300">
@@ -62,15 +64,15 @@ const Footer = () => {
                     <ul className="space-y-4 text-sm font-sans">
                         <li className="flex items-start gap-3">
                             <MapPin size={18} className="text-blue-500 shrink-0 mt-0.5" />
-                            <span>Kubwa, Abuja,<br />Nigeria</span>
+                            <span>{settings?.hotelInfo?.address}</span>
                         </li>
                         <li className="flex items-center gap-3">
                             <Phone size={18} className="text-blue-500 shrink-0" />
-                            <span>+234 800 123 4567</span>
+                            <span>{settings?.hotelInfo?.phone}</span>
                         </li>
                         <li className="flex items-center gap-3">
                             <Mail size={18} className="text-blue-500 shrink-0" />
-                            <span>reservations@suavebychloe.com</span>
+                            <span>{settings?.hotelInfo?.email}</span>
                         </li>
                     </ul>
                 </div>

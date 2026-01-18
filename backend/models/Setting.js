@@ -107,6 +107,10 @@ const settingSchema = new mongoose.Schema(
           default: 7.3221,
         },
       },
+      googleEmbedLink: {
+        type: String,
+        default: "",
+      },
       // Singleton enforcer
       isSingleton: {
         type: Number,

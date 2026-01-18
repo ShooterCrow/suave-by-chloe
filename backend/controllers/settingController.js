@@ -161,6 +161,7 @@ const updateSettings = asyncHandler(async (req, res) => {
         "currency",
         "totalRooms",
         "starRating",
+        "googleEmbedLink",
       ];
 
       const hasHotelInfoFields = hotelInfoFields.some(

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { MapPin, Phone, Mail, Clock, Navigation, Car, Train, Plane, Copy, Check, ExternalLink } from 'lucide-react';
+import { MapPin, Phone, Mail, Clock, Navigation, Car, Plane, Copy, Check, ExternalLink } from 'lucide-react';
 import { Helmet } from 'react-helmet-async';
 import SpotlightCard from '../../components/ui/SpotlightCard';
 import { useGetSettingsQuery } from '../authenticatedPages/settingsApiSlice';
@@ -9,7 +9,13 @@ const Location = () => {
     const [copiedItem, setCopiedItem] = useState(null);
 
     // Fetch hotel settings from backend
-    const { data: settings, isLoading, isError } = useGetSettingsQuery();
+    const {
+        data: settings,
+        isLoading: isSettingsLoading,
+        isError: isSettingsError,
+        error: settingsError,
+        refetch: refetchSettings
+    } = useGetSettingsQuery();
 
     // Extract hotel info from settings, with fallback to defaults
     const hotelInfo = settings?.hotelInfo || {
@@ -17,7 +23,8 @@ const Location = () => {
         phone: "+234 800 123 4567",
         email: "reservations@suavebychloe.com",
         hours: "24/7 Front Desk",
-        coordinates: { lat: 9.1550, lng: 7.3221 }
+        coordinates: { lat: 9.1550, lng: 7.3221 },
+        googleEmbedLink: ""
     };
 
     const transportOptions = [
@@ -91,6 +98,22 @@ const Location = () => {
         setTimeout(() => setCopiedItem(null), 2000);
     };
 
+    // Generate map URL based on available data
+    const generateMapUrl = () => {
+        // If we have a direct Google embed link from backend, use it
+        if (hotelInfo.googleEmbedLink) {
+            return hotelInfo.googleEmbedLink;
+        }
+
+        // If we have coordinates, generate embed URL
+        if (hotelInfo.coordinates?.lat && hotelInfo.coordinates?.lng) {
+            return `https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3963.952912260219!2d${hotelInfo.coordinates.lng}!3d${hotelInfo.coordinates.lat}!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2z${hotelInfo.coordinates.lat}%2C${hotelInfo.coordinates.lng}!5e0!3m2!1sen!2sng!4v${Date.now()}!5m2!1sen!2sng`;
+        }
+
+        // Fallback to static map with Kubwa location
+        return "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3963.952912260219!2d7.3221!3d9.1550!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x104dd94dfdfa18b5%3A0x63b8cabfc117c098!2sTK%20Mall%20Kubwa!5e0!3m2!1sen!2sng!4v1768758512469!5m2!1sen!2sng";
+    };
+
     return (
         <div className="min-h-screen pt-28 pb-16 px-4 md:px-8 bg-gray-50 dark:bg-void">
             <Helmet>
@@ -124,23 +147,47 @@ const Location = () => {
                 {/* Map Section */}
                 <SpotlightCard className="mb-12 overflow-hidden bg-white dark:bg-gray-800 border-gray-300 dark:border-white/10">
                     <div className="relative w-full h-[400px] md:h-[500px] bg-gray-200 dark:bg-gray-700">
-                        {/* Placeholder for map - Replace with actual map component */}
-                        <iframe
-                            title="Hotel Location Map"
-                            src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d15752.545!2d7.3221!3d9.1550!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x104e760c00000001%3A0x0!2sKubwa%2C+Abuja!5e0!3m2!1sen!2sng!4v1234567890123!5m2!1sen!2sng"
-                            width="100%"
-                            height="100%"
-                            style={{ border: 0 }}
-                            allowFullScreen=""
-                            loading="lazy"
-                            referrerPolicy="no-referrer-when-downgrade"
-                            className="absolute inset-0"
-                        />
-                        <div className="absolute bottom-4 right-4 flex gap-2">
-                            <button className="px-4 py-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-lg shadow-lg border border-gray-300 dark:border-white/10 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors font-sans text-sm font-medium">
-                                Get Directions
-                            </button>
-                        </div>
+                        {isSettingsLoading ? (
+                            <div className="absolute inset-0 flex items-center justify-center">
+                                <Loader />
+                            </div>
+                        ) : isSettingsError ? (
+                            <div className="flex items-center justify-center h-full">
+                                <div className="text-center p-6">
+                                    <p className="text-red-500 mb-2">Failed to load map location</p>
+                                    <button
+                                        onClick={() => refetchSettings()}
+                                        className="text-sm text-blue-500 hover:underline"
+                                    >
+                                        Try again
+                                    </button>
+                                </div>
+                            </div>
+                        ) : (
+                            <>
+                                <iframe
+                                    title="Suave by Chloe Location Map"
+                                    src={generateMapUrl()}
+                                    width="100%"
+                                    height="100%"
+                                    style={{ border: 0 }}
+                                    allowFullScreen=""
+                                    loading="lazy"
+                                    referrerPolicy="no-referrer-when-downgrade"
+                                    className="absolute inset-0"
+                                />
+                                <div className="absolute bottom-4 right-4 flex gap-2">
+                                    <a
+                                        href={`https://www.google.com/maps/dir/?api=1&destination=${hotelInfo.coordinates?.lat || 9.1550},${hotelInfo.coordinates?.lng || 7.3221}`}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="px-4 py-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-lg shadow-lg border border-gray-300 dark:border-white/10 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors font-sans text-sm font-medium"
+                                    >
+                                        Get Directions
+                                    </a>
+                                </div>
+                            </>
+                        )}
                     </div>
                 </SpotlightCard>
 
