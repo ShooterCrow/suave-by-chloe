@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
 import {
     Search,
@@ -53,6 +53,17 @@ import {
     List
 } from 'lucide-react';
 import SpotlightCard from '../../../components/ui/SpotlightCard';
+import {
+    useGetSiteContentQuery,
+    useUpdateHomePageMutation,
+    useUpdateGalleryMutation,
+    useUpdateOffersMutation,
+    useUpdateBlogMutation,
+    useUpdateMediaLibraryMutation,
+    useDeleteMediaImageMutation
+} from '../siteContentApiSlice';
+import { toast } from 'react-hot-toast';
+import Loader from '../../../components/ui/Loader';
 
 
 // Status Badge Component
@@ -199,68 +210,46 @@ const ContentCard = ({ content, type, onEdit, onDelete, onPreview, onDuplicate }
 };
 
 // Homepage Content Editor
-const HomepageEditor = () => {
+const HomepageEditor = ({ data }) => {
+    const [updateHomePage, { isLoading }] = useUpdateHomePageMutation();
     const [sections, setSections] = useState([
         {
             id: 'hero',
             title: 'Hero Section',
             type: 'hero',
             enabled: true,
-            content: {
-                title: 'Luxury Redefined',
-                subtitle: 'Experience unparalleled comfort and service',
-                buttonText: 'Book Your Stay',
-                image: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80',
-                overlayOpacity: 0.3,
-                textColor: 'white'
-            }
-        },
-        {
-            id: 'features',
-            title: 'Features Section',
-            type: 'features',
-            enabled: true,
-            content: {
-                title: 'Our Amenities',
-                subtitle: 'Everything you need for a perfect stay',
-                features: [
-                    { icon: 'wifi', title: 'High-Speed WiFi', description: 'Free high-speed internet throughout' },
-                    { icon: 'pool', title: 'Infinity Pool', description: 'Stunning city-view infinity pool' },
-                    { icon: 'spa', title: 'Luxury Spa', description: 'World-class spa treatments' },
-                    { icon: 'dining', title: 'Fine Dining', description: 'Award-winning restaurants' }
-                ]
-            }
-        },
-        {
-            id: 'testimonials',
-            title: 'Testimonials',
-            type: 'testimonials',
-            enabled: true,
-            content: {
-                title: 'Guest Reviews',
-                subtitle: 'What our guests say about us',
-                testimonials: [
-                    { name: 'Sarah M.', quote: 'Best hotel experience ever!', rating: 5 },
-                    { name: 'John D.', quote: 'Absolutely stunning views.', rating: 5 },
-                    { name: 'Lisa R.', quote: 'Service was exceptional.', rating: 4 }
-                ]
-            }
-        },
-        {
-            id: 'cta',
-            title: 'Call to Action',
-            type: 'cta',
-            enabled: true,
-            content: {
-                title: 'Ready for Your Dream Vacation?',
-                subtitle: 'Book now and get 20% off your first stay',
-                buttonText: 'Book Now',
-                backgroundColor: 'blue'
+            content: data?.hero || {
+                title: '',
+                subtitle: '',
+                buttonText: '',
+                image: '',
             }
         }
     ]);
 
+    useEffect(() => {
+        if (data) {
+            setSections(prev => prev.map(section => {
+                if (section.id === 'hero') return { ...section, content: { ...section.content, ...data.hero } };
+                if (section.id === 'features') return { ...section, content: { ...section.content, features: data.features } };
+                if (section.id === 'testimonials') return { ...section, content: { ...section.content, testimonials: data.testimonials } };
+                if (section.id === 'cta') return { ...section, content: { ...section.content, ...data.cta } };
+                return section;
+            }));
+        }
+    }, [data]);
+
     const [editingSection, setEditingSection] = useState(null);
+    const [heroImageFile, setHeroImageFile] = useState(null);
+    const [heroImagePreview, setHeroImagePreview] = useState(null);
+
+    const handleHeroImageChange = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            setHeroImageFile(file);
+            setHeroImagePreview(URL.createObjectURL(file));
+        }
+    };
 
     const handleSectionToggle = (id) => {
         setSections(sections.map(section =>
@@ -268,8 +257,30 @@ const HomepageEditor = () => {
         ));
     };
 
-    const handleSave = () => {
-        alert('Homepage changes saved successfully!');
+    const handleSave = async () => {
+        try {
+            const formData = new FormData();
+
+            const homepageData = {
+                hero: sections.find(s => s.id === 'hero').content,
+                // features: sections.find(s => s.id === 'features').content.features,
+                // testimonials: sections.find(s => s.id === 'testimonials').content.testimonials,
+                // cta: sections.find(s => s.id === 'cta').content
+            };
+
+            formData.append('homepage', JSON.stringify(homepageData));
+
+            if (heroImageFile) {
+                formData.append('heroImage', heroImageFile);
+            }
+
+            await updateHomePage(formData).unwrap();
+            toast.success('Homepage changes saved successfully!');
+            setHeroImageFile(null);
+            setHeroImagePreview(null);
+        } catch (err) {
+            toast.error('Failed to save homepage changes');
+        }
     };
 
     const handlePreview = () => {
@@ -297,10 +308,11 @@ const HomepageEditor = () => {
                     </button>
                     <button
                         onClick={handleSave}
+                        disabled={isLoading}
                         className="px-4 py-2 rounded-lg font-sans font-medium transition-colors bg-blue-600 dark:bg-blue-500 text-white hover:bg-blue-700 dark:hover:bg-blue-600 flex items-center gap-2"
                     >
                         <Save size={16} />
-                        Save Changes
+                        {isLoading ? 'Saving...' : 'Save Changes'}
                     </button>
                 </div>
             </div>
@@ -365,25 +377,27 @@ const HomepageEditor = () => {
                                 <label className="block text-sm font-sans font-medium text-gray-900 dark:text-white mb-2">
                                     Hero Image
                                 </label>
-                                <div className="aspect-video rounded-lg overflow-hidden mb-2">
+                                <div className="aspect-video rounded-lg overflow-hidden mb-2 border border-gray-200 dark:border-white/10 relative group">
                                     <img
-                                        src={editingSection.content.image}
+                                        src={heroImagePreview || editingSection.content.image}
                                         alt="Hero Preview"
                                         className="w-full h-full object-cover"
                                     />
+                                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                        <label className="cursor-pointer bg-white dark:bg-dark-800 p-2 rounded-full shadow-lg transform hover:scale-110 transition-transform">
+                                            <Upload className="text-blue-600 dark:text-blue-400" size={20} />
+                                            <input
+                                                type="file"
+                                                className="hidden"
+                                                accept="image/*"
+                                                onChange={handleHeroImageChange}
+                                            />
+                                        </label>
+                                    </div>
                                 </div>
-                                <input
-                                    type="text"
-                                    value={editingSection.content.image}
-                                    onChange={(e) => {
-                                        const updated = {
-                                            ...editingSection,
-                                            content: { ...editingSection.content, image: e.target.value }
-                                        };
-                                        setEditingSection(updated);
-                                    }}
-                                    className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-white/10 bg-white dark:bg-dark-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                />
+                                <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">
+                                    {heroImageFile ? `Selected: ${heroImageFile.name}` : 'Click the upload icon to change image'}
+                                </p>
                             </div>
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
@@ -464,7 +478,7 @@ const HomepageEditor = () => {
                             {/* Hero Preview */}
                             <div className="relative aspect-video rounded-lg overflow-hidden mb-6">
                                 <img
-                                    src={sections.find(s => s.id === 'hero')?.content.image}
+                                    src={heroImagePreview || sections.find(s => s.id === 'hero')?.content.image}
                                     alt="Hero Preview"
                                     className="w-full h-full object-cover"
                                 />
@@ -518,94 +532,133 @@ const HomepageEditor = () => {
 };
 
 // Gallery Manager Component
-const GalleryManager = () => {
-    const [galleries, setGalleries] = useState([
-        {
-            id: 1,
-            title: 'Rooms & Suites',
-            type: 'rooms',
-            imageCount: 24,
-            coverImage: 'https://images.unsplash.com/photo-1590490360182-c33d57733427?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80',
-            status: 'published',
-            updatedAt: '2024-01-15',
-            description: 'Luxury rooms and suites with city views'
-        },
-        {
-            id: 2,
-            title: 'Amenities',
-            type: 'amenities',
-            imageCount: 18,
-            coverImage: 'https://images.unsplash.com/photo-1540555700478-4be289fbecef?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80',
-            status: 'published',
-            updatedAt: '2024-01-10',
-            description: 'Hotel facilities and amenities'
-        },
-        {
-            id: 3,
-            title: 'Dining',
-            type: 'dining',
-            imageCount: 12,
-            coverImage: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80',
-            status: 'published',
-            updatedAt: '2024-01-05',
-            description: 'Restaurants and dining experiences'
-        },
-        {
-            id: 4,
-            title: 'Events & Weddings',
-            type: 'events',
-            imageCount: 32,
-            coverImage: 'https://images.unsplash.com/photo-1519167758481-83f29da8c9a7?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80',
-            status: 'draft',
-            updatedAt: '2024-01-01',
-            description: 'Venues and event spaces'
+const GalleryManager = ({ data }) => {
+    const [updateGallery, { isLoading }] = useUpdateGalleryMutation();
+    const [galleries, setGalleries] = useState(data || []);
+
+    useEffect(() => {
+        if (data) {
+            setGalleries(data);
         }
-    ]);
+    }, [data]);
 
     const [selectedGallery, setSelectedGallery] = useState(null);
-    const [images, setImages] = useState([
-        {
-            id: 1,
-            url: 'https://images.unsplash.com/photo-1590490360182-c33d57733427?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80',
-            title: 'City View Suite',
-            description: 'Luxury suite with panoramic city views',
-            category: 'rooms',
-            order: 1,
-            featured: true
-        },
-        {
-            id: 2,
-            url: 'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80',
-            title: 'Presidential Suite',
-            description: 'Our most luxurious accommodation',
-            category: 'rooms',
-            order: 2,
-            featured: true
+
+    const handleAddAlbum = () => {
+        const newAlbum = {
+            id: `album-${Date.now()}`,
+            title: 'New Album',
+            type: 'general',
+            imageCount: 0,
+            coverImage: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80',
+            status: 'draft',
+            updatedAt: new Date().toISOString(),
+            description: 'New photo gallery description',
+            images: []
+        };
+        setGalleries([...galleries, newAlbum]);
+        setSelectedGallery(newAlbum);
+    };
+
+    const handleDeleteAlbum = (id) => {
+        if (window.confirm('Are you sure you want to delete this Entire Album?')) {
+            const updated = galleries.filter(g => g.id !== id);
+            setGalleries(updated);
+            if (selectedGallery?.id === id) setSelectedGallery(null);
         }
-    ]);
+    };
+
+    const handleUpdateAlbumInfo = (field, value) => {
+        if (!selectedGallery) return;
+        setGalleries(galleries.map(g =>
+            g.id === selectedGallery.id ? { ...g, [field]: value } : g
+        ));
+    };
+
+    const handleSetCoverImage = (url) => {
+        if (!selectedGallery) return;
+        setGalleries(galleries.map(g =>
+            g.id === selectedGallery.id ? { ...g, coverImage: url } : g
+        ));
+    };
+
+    const handleUpdateImage = (imageId, field, value) => {
+        if (!selectedGallery) return;
+        setGalleries(galleries.map(g =>
+            g.id === selectedGallery.id
+                ? {
+                    ...g,
+                    images: g.images.map(img =>
+                        img.id === imageId ? { ...img, [field]: value } : img
+                    )
+                }
+                : g
+        ));
+    };
+
+    const handleSave = async () => {
+        try {
+            const formData = new FormData();
+            formData.append('gallery', JSON.stringify(galleries));
+
+            // Append files matching the new image structure
+            galleries.forEach(gallery => {
+                if (gallery.images) {
+                    gallery.images.forEach(img => {
+                        if (img.file) {
+                            formData.append('galleryManagement', img.file);
+                        }
+                    });
+                }
+            });
+
+            await updateGallery(formData).unwrap();
+            toast.success('Gallery changes saved successfully!');
+        } catch (err) {
+            console.error("Save error:", err);
+            toast.error(err?.data?.message || 'Failed to save gallery changes');
+        }
+    };
 
     const handleUploadImages = (files) => {
+        if (!selectedGallery) return;
         const newImages = Array.from(files).map((file, index) => ({
-            id: images.length + index + 1,
-            url: URL.createObjectURL(file),
-            title: `Image ${images.length + index + 1}`,
+            id: Date.now() + index,
+            url: URL.createObjectURL(file), // Note: Real implementation would upload files
+            title: file.name, // Use filename for matching in backend
             description: '',
-            category: selectedGallery?.type || 'uncategorized',
-            order: images.length + index + 1,
-            featured: false
+            category: selectedGallery.type,
+            order: galleries.find(g => g.id === selectedGallery.id).images.length + index + 1,
+            featured: false,
+            file: file // Store the actual file object
         }));
-        setImages([...images, ...newImages]);
+
+        setGalleries(galleries.map(g =>
+            g.id === selectedGallery.id ? { ...g, images: [...g.images, ...newImages], imageCount: g.images.length + newImages.length } : g
+        ));
+    };
+    const handleDeleteImage = (imageId) => {
+        if (!selectedGallery) return;
+        setGalleries(galleries.map(g =>
+            g.id === selectedGallery.id
+                ? { ...g, images: g.images.filter(img => img.id !== imageId), imageCount: g.images.length - 1 }
+                : g
+        ));
     };
 
-    const handleDeleteImage = (id) => {
-        setImages(images.filter(img => img.id !== id));
-    };
-
-    const handleSetFeatured = (id) => {
-        setImages(images.map(img => ({
-            ...img,
-            featured: img.id === id
-        })));
+    const handleSetFeatured = (imageId) => {
+        if (!selectedGallery) return;
+        setGalleries(galleries.map(g =>
+            g.id === selectedGallery.id
+                ? {
+                    ...g,
+                    images: g.images.map(img => ({
+                        ...img,
+                        featured: img.id === imageId
+                    }))
+                }
+                : g
+        ));
     };
 
     return (
@@ -619,46 +672,70 @@ const GalleryManager = () => {
                         Manage photo galleries and images
                     </p>
                 </div>
-                <button className="px-4 py-2 rounded-lg font-sans font-medium transition-colors bg-blue-600 dark:bg-blue-500 text-white hover:bg-blue-700 dark:hover:bg-blue-600 flex items-center gap-2">
-                    <Plus size={16} />
-                    New Gallery
-                </button>
+                <div className="flex items-center gap-2">
+                    <button
+                        onClick={handleSave}
+                        disabled={isLoading}
+                        className="px-4 py-2 rounded-lg font-sans font-medium transition-colors bg-blue-600 dark:bg-blue-500 text-white hover:bg-blue-700 dark:hover:bg-blue-600 flex items-center gap-2"
+                    >
+                        <Save size={16} />
+                        {isLoading ? 'Saving...' : 'Save Changes'}
+                    </button>
+                    <button
+                        onClick={handleAddAlbum}
+                        disabled={isLoading}
+                        className="px-4 py-2 rounded-lg font-sans font-medium transition-colors bg-blue-600 dark:bg-blue-500 text-white hover:bg-blue-700 dark:hover:bg-blue-600 flex items-center gap-2 disabled:opacity-50"
+                    >
+                        <Plus size={16} />
+                        New Album
+                    </button>
+                </div>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 {/* Galleries List */}
                 <div className="lg:col-span-1">
-                    <div className="space-y-4">
+                    <div className="space-y-4 max-h-[700px] overflow-y-auto pr-2">
                         {galleries.map(gallery => (
                             <div
                                 key={gallery.id}
                                 onClick={() => setSelectedGallery(gallery)}
-                                className={`p-4 rounded-lg border cursor-pointer transition-colors ${selectedGallery?.id === gallery.id
+                                className={`group p-4 rounded-lg border cursor-pointer transition-colors relative ${selectedGallery?.id === gallery.id
                                     ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
                                     : 'border-gray-200 dark:border-white/10 hover:border-blue-300 dark:hover:border-blue-500/50'
                                     }`}
                             >
+                                <button
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleDeleteAlbum(gallery.id);
+                                    }}
+                                    disabled={isLoading}
+                                    className="absolute top-2 right-2 p-1.5 rounded-lg text-red-500 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-50 dark:hover:bg-red-900/20 disabled:cursor-not-allowed"
+                                >
+                                    <Trash2 size={14} />
+                                </button>
                                 <div className="flex items-center gap-3 mb-3">
-                                    <div className="w-12 h-12 rounded-lg overflow-hidden">
+                                    <div className="w-12 h-12 rounded-lg overflow-hidden shrink-0">
                                         <img
                                             src={gallery.coverImage}
                                             alt={gallery.title}
                                             className="w-full h-full object-cover"
                                         />
                                     </div>
-                                    <div>
-                                        <h4 className="font-sans font-medium text-gray-900 dark:text-white">
+                                    <div className="min-w-0">
+                                        <h4 className="font-sans font-medium text-gray-900 dark:text-white truncate">
                                             {gallery.title}
                                         </h4>
                                         <div className="flex items-center gap-2">
                                             <StatusBadge status={gallery.status} />
                                             <span className="text-xs font-sans text-gray-500 dark:text-gray-400">
-                                                {gallery.imageCount} images
+                                                {gallery.imageCount || gallery.images?.length || 0} images
                                             </span>
                                         </div>
                                     </div>
                                 </div>
-                                <p className="text-sm font-sans text-gray-600 dark:text-gray-400">
+                                <p className="text-sm font-sans text-gray-600 dark:text-gray-400 line-clamp-2">
                                     {gallery.description}
                                 </p>
                             </div>
@@ -690,7 +767,7 @@ const GalleryManager = () => {
                                     />
                                     <label
                                         htmlFor="image-upload"
-                                        className="px-4 py-2 rounded-lg font-sans font-medium transition-colors border border-gray-300 dark:border-white/10 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/5 cursor-pointer flex items-center gap-2"
+                                        className={`px-4 py-2 rounded-lg font-sans font-medium transition-colors border border-gray-300 dark:border-white/10 text-gray-700 dark:text-gray-300 flex items-center gap-2 ${isLoading ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-100 dark:hover:bg-white/5 cursor-pointer'}`}
                                     >
                                         <Upload size={16} />
                                         Upload Images
@@ -700,8 +777,8 @@ const GalleryManager = () => {
 
                             {/* Gallery Images */}
                             <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                                {images.map(image => (
-                                    <div key={image.id} className="group relative aspect-square rounded-lg overflow-hidden border border-gray-200 dark:border-white/10">
+                                {galleries.find(g => g.id === selectedGallery.id)?.images.map((image, idx) => (
+                                    <div key={idx} className="group relative aspect-square rounded-lg overflow-hidden border border-gray-200 dark:border-white/10">
                                         <img
                                             src={image.url}
                                             alt={image.title}
@@ -716,25 +793,43 @@ const GalleryManager = () => {
                                                 )}
                                                 <button
                                                     onClick={() => handleDeleteImage(image.id)}
-                                                    className="w-8 h-8 rounded-full bg-red-500 text-white flex items-center justify-center"
+                                                    disabled={isLoading}
+                                                    className="w-8 h-8 rounded-full bg-red-500 text-white flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
                                                 >
                                                     <Trash2 size={14} />
                                                 </button>
                                             </div>
                                             <div className="text-white">
-                                                <h5 className="font-sans font-medium mb-1">{image.title}</h5>
-                                                <p className="text-xs opacity-80">{image.description}</p>
+                                                <input
+                                                    type="text"
+                                                    value={image.title}
+                                                    onChange={(e) => handleUpdateImage(image.id, 'title', e.target.value)}
+                                                    className="w-full bg-transparent border-none text-white font-sans font-medium px-0 py-0 focus:ring-0 text-sm mb-1"
+                                                    placeholder="Image title"
+                                                />
+                                                <input
+                                                    type="text"
+                                                    value={image.description}
+                                                    onChange={(e) => handleUpdateImage(image.id, 'description', e.target.value)}
+                                                    className="w-full bg-transparent border-none text-white/80 font-sans text-xs px-0 py-0 focus:ring-0"
+                                                    placeholder="Add description..."
+                                                />
                                             </div>
                                         </div>
                                         <div className="absolute top-2 right-2 flex gap-2">
                                             <button
                                                 onClick={() => handleSetFeatured(image.id)}
-                                                className={`w-8 h-8 rounded-full flex items-center justify-center ${image.featured ? 'bg-yellow-500' : 'bg-white/20 backdrop-blur-sm'}`}
+                                                title="Feature this image"
+                                                className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${image.featured ? 'bg-yellow-500 text-white' : 'bg-white/20 backdrop-blur-sm text-white/80 hover:bg-white/40'}`}
                                             >
-                                                <Star size={14} className={image.featured ? 'text-white' : 'text-white/80'} fill={image.featured ? 'white' : 'none'} />
+                                                <Star size={14} fill={image.featured ? 'currentColor' : 'none'} />
                                             </button>
-                                            <button className="w-8 h-8 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center">
-                                                <Edit size={14} className="text-white/80" />
+                                            <button
+                                                onClick={() => handleSetCoverImage(image.url)}
+                                                title="Set as cover image"
+                                                className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${galleries.find(g => g.id === selectedGallery.id)?.coverImage === image.url ? 'bg-blue-500 text-white' : 'bg-white/20 backdrop-blur-sm text-white/80 hover:bg-white/40'}`}
+                                            >
+                                                <Image size={14} />
                                             </button>
                                         </div>
                                     </div>
@@ -753,7 +848,8 @@ const GalleryManager = () => {
                                         </label>
                                         <input
                                             type="text"
-                                            defaultValue={selectedGallery.title}
+                                            value={galleries.find(g => g.id === selectedGallery.id)?.title || ''}
+                                            onChange={(e) => handleUpdateAlbumInfo('title', e.target.value)}
                                             className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-white/10 bg-white dark:bg-dark-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                         />
                                     </div>
@@ -762,14 +858,34 @@ const GalleryManager = () => {
                                             Description
                                         </label>
                                         <textarea
-                                            defaultValue={selectedGallery.description}
+                                            value={galleries.find(g => g.id === selectedGallery.id)?.description || ''}
+                                            onChange={(e) => handleUpdateAlbumInfo('description', e.target.value)}
                                             rows="3"
                                             className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-white/10 bg-white dark:bg-dark-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                         />
                                     </div>
+                                    <div>
+                                        <label className="block text-sm font-sans font-medium text-gray-900 dark:text-white mb-2">
+                                            Status
+                                        </label>
+                                        <select
+                                            value={galleries.find(g => g.id === selectedGallery.id)?.status || 'draft'}
+                                            onChange={(e) => handleUpdateAlbumInfo('status', e.target.value)}
+                                            className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-white/10 bg-white dark:bg-dark-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                        >
+                                            <option value="draft">Draft</option>
+                                            <option value="published">Published</option>
+                                            <option value="archived">Archived</option>
+                                        </select>
+                                    </div>
                                     <div className="flex justify-end">
-                                        <button className="px-4 py-2 rounded-lg font-sans font-medium transition-colors bg-blue-600 dark:bg-blue-500 text-white hover:bg-blue-700 dark:hover:bg-blue-600">
-                                            Save Gallery
+                                        <button
+                                            onClick={handleSave}
+                                            disabled={isLoading}
+                                            className="px-4 py-2 rounded-lg font-sans font-medium transition-colors bg-blue-600 dark:bg-blue-500 text-white hover:bg-blue-700 dark:hover:bg-blue-600 disabled:opacity-50 flex items-center gap-2"
+                                        >
+                                            <Save size={16} />
+                                            {isLoading ? 'Saving...' : 'Save Gallery'}
                                         </button>
                                     </div>
                                 </div>
@@ -790,69 +906,22 @@ const GalleryManager = () => {
 };
 
 // Offers & Deals Manager
-const OffersManager = () => {
-    const [offers, setOffers] = useState([
-        {
-            id: 1,
-            title: 'Summer Escape Package',
-            code: 'SUMMER24',
-            discount: 20,
-            type: 'percentage',
-            description: 'Get 20% off your summer stay',
-            startDate: '2024-06-01',
-            endDate: '2024-08-31',
-            status: 'active',
-            usage: 142,
-            revenue: 28400,
-            image: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80',
-            updatedAt: '2024-05-15'
-        },
-        {
-            id: 2,
-            title: 'Early Bird Special',
-            code: 'EARLYBIRD',
-            discount: 15,
-            type: 'percentage',
-            description: 'Book 30 days in advance and save 15%',
-            startDate: '2024-01-01',
-            endDate: '2024-12-31',
-            status: 'active',
-            usage: 89,
-            revenue: 17800,
-            image: 'https://images.unsplash.com/photo-1564501049418-3c27787d01e8?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80',
-            updatedAt: '2024-05-10'
-        },
-        {
-            id: 3,
-            title: 'Weekend Getaway',
-            code: 'WEEKEND',
-            discount: 100,
-            type: 'fixed',
-            description: '$100 off weekend stays',
-            startDate: '2024-05-01',
-            endDate: '2024-07-31',
-            status: 'active',
-            usage: 56,
-            revenue: 11200,
-            image: 'https://images.unsplash.com/photo-1564501049418-3c27787d01e8?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80',
-            updatedAt: '2024-05-05'
-        },
-        {
-            id: 4,
-            title: 'Honeymoon Package',
-            code: 'HONEYMOON',
-            discount: 25,
-            type: 'percentage',
-            description: 'Special package for honeymooners',
-            startDate: '2024-01-01',
-            endDate: '2024-12-31',
-            status: 'draft',
-            usage: 0,
-            revenue: 0,
-            image: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80',
-            updatedAt: '2024-05-01'
+const OffersManager = ({ data }) => {
+    const [updateOffers, { isLoading }] = useUpdateOffersMutation();
+    const [offers, setOffers] = useState(data || []);
+
+    useEffect(() => {
+        if (data) setOffers(data);
+    }, [data]);
+
+    const handleSave = async (updatedOffers) => {
+        try {
+            await updateOffers({ offers: updatedOffers || offers }).unwrap();
+            toast.success('Offers updated successfully');
+        } catch (err) {
+            toast.error('Failed to update offers');
         }
-    ]);
+    };
 
     const [newOffer, setNewOffer] = useState({
         title: '',
@@ -865,17 +934,19 @@ const OffersManager = () => {
         status: 'draft'
     });
 
-    const handleCreateOffer = () => {
+    const handleCreateOffer = async () => {
         if (!newOffer.title || !newOffer.code) return;
         const offer = {
             ...newOffer,
-            id: offers.length + 1,
+            id: Date.now(),
             usage: 0,
             revenue: 0,
-            image: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80',
+            image: '',
             updatedAt: new Date().toISOString().split('T')[0]
         };
-        setOffers([...offers, offer]);
+        const updated = [...offers, offer];
+        setOffers(updated);
+        await handleSave(updated);
         setNewOffer({
             title: '',
             code: '',
@@ -888,12 +959,29 @@ const OffersManager = () => {
         });
     };
 
-    const handleToggleStatus = (id) => {
-        setOffers(offers.map(offer =>
+    const handleToggleStatus = async (id) => {
+        const updated = offers.map(offer =>
             offer.id === id
                 ? { ...offer, status: offer.status === 'active' ? 'inactive' : 'active' }
                 : offer
-        ));
+        );
+        setOffers(updated);
+        await handleSave(updated);
+    };
+
+    const handleUpdateOffer = (id, field, value) => {
+        const updated = offers.map(offer =>
+            offer.id === id ? { ...offer, [field]: value } : offer
+        );
+        setOffers(updated);
+    };
+
+    const handleDeleteOffer = async (id) => {
+        if (window.confirm('Are you sure you want to delete this offer?')) {
+            const updated = offers.filter(offer => offer.id !== id);
+            setOffers(updated);
+            await handleSave(updated);
+        }
     };
 
     return (
@@ -907,9 +995,13 @@ const OffersManager = () => {
                         Manage special offers and promotions
                     </p>
                 </div>
-                <button className="px-4 py-2 rounded-lg font-sans font-medium transition-colors bg-blue-600 dark:bg-blue-500 text-white hover:bg-blue-700 dark:hover:bg-blue-600 flex items-center gap-2">
+                <button
+                    onClick={handleCreateOffer}
+                    disabled={isLoading}
+                    className="px-4 py-2 rounded-lg font-sans font-medium transition-colors bg-blue-600 dark:bg-blue-500 text-white hover:bg-blue-700 dark:hover:bg-blue-600 flex items-center gap-2 disabled:opacity-50"
+                >
                     <Plus size={16} />
-                    Create Offer
+                    {isLoading ? 'Creating...' : 'Create Offer'}
                 </button>
             </div>
 
@@ -1018,8 +1110,8 @@ const OffersManager = () => {
                         Active Offers
                     </h4>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {offers.map(offer => (
-                            <div key={offer.id} className="p-4 rounded-lg border border-gray-200 dark:border-white/10 hover:border-blue-300 dark:hover:border-blue-500/50 transition-colors">
+                        {offers.map((offer, index) => (
+                            <div key={index} className="p-4 rounded-lg border border-gray-200 dark:border-white/10 hover:border-blue-300 dark:hover:border-blue-500/50 transition-colors">
                                 <div className="flex items-start justify-between mb-3">
                                     <div>
                                         <div className="flex items-center gap-2 mb-1">
@@ -1040,12 +1132,18 @@ const OffersManager = () => {
                                     <div className="flex items-center gap-2">
                                         <button
                                             onClick={() => handleToggleStatus(offer.id)}
+                                            disabled={isLoading}
                                             className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${offer.status === 'active' ? 'bg-green-600' : 'bg-gray-300 dark:bg-white/20'}`}
                                         >
                                             <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${offer.status === 'active' ? 'translate-x-6' : 'translate-x-1'}`} />
                                         </button>
-                                        <button className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-white/5 text-gray-900 dark:text-white">
-                                            <MoreVertical size={16} />
+                                        <button
+                                            onClick={() => handleDeleteOffer(offer.id)}
+                                            disabled={isLoading}
+                                            className="p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 text-red-500 transition-colors disabled:opacity-50"
+                                            title="Delete Offer"
+                                        >
+                                            <Trash2 size={16} />
                                         </button>
                                     </div>
                                 </div>
@@ -1070,7 +1168,7 @@ const OffersManager = () => {
                                     <div className="flex items-center justify-between">
                                         <span className="text-xs font-sans text-gray-500 dark:text-gray-400">Revenue Generated:</span>
                                         <span className="font-serif font-bold text-green-600 dark:text-green-400">
-                                            ${offer.revenue.toLocaleString()}
+                                            ${offer?.revenue?.toLocaleString()}
                                         </span>
                                     </div>
                                 </div>
@@ -1084,79 +1182,35 @@ const OffersManager = () => {
 };
 
 // Blog Manager Component
-const BlogManager = () => {
-    const [posts, setPosts] = useState([
-        {
-            id: 1,
-            title: 'Top 10 Luxury Hotels in Abuja',
-            slug: 'top-10-luxury-hotels-abuja',
-            excerpt: 'Discover the most luxurious hotels offering breathtaking city views and world-class amenities.',
-            category: 'Travel',
-            author: 'Sarah Johnson',
-            status: 'published',
-            views: 12450,
-            likes: 842,
-            comments: 56,
-            featured: true,
-            image: 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80',
-            publishedAt: '2024-05-20',
-            updatedAt: '2024-05-20'
-        },
-        {
-            id: 2,
-            title: 'Best Restaurants Near Suave By Chloe',
-            slug: 'best-restaurants-near-suave-by-chloe',
-            excerpt: 'Explore the culinary delights surrounding our luxury hotel.',
-            category: 'Food',
-            author: 'Michael Chen',
-            status: 'published',
-            views: 8560,
-            likes: 521,
-            comments: 32,
-            featured: false,
-            image: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80',
-            publishedAt: '2024-05-15',
-            updatedAt: '2024-05-15'
-        },
-        {
-            id: 3,
-            title: 'Summer Travel Tips 2024',
-            slug: 'summer-travel-tips-2024',
-            excerpt: 'Make the most of your summer vacation with these expert tips.',
-            category: 'Travel Tips',
-            author: 'Robert Davis',
-            status: 'draft',
-            views: 0,
-            likes: 0,
-            comments: 0,
-            featured: false,
-            image: 'https://images.unsplash.com/photo-1469474968028-56623f02e42e?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80',
-            publishedAt: '',
-            updatedAt: '2024-05-10'
-        },
-        {
-            id: 4,
-            title: 'Wedding Planning at Luxury Hotels',
-            slug: 'wedding-planning-luxury-hotels',
-            excerpt: 'Everything you need to know about planning your dream wedding.',
-            category: 'Events',
-            author: 'Emily Wilson',
-            status: 'scheduled',
-            views: 0,
-            likes: 0,
-            comments: 0,
-            featured: false,
-            image: 'https://images.unsplash.com/photo-1519167758481-83f29da8c9a7?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80',
-            publishedAt: '2024-06-01',
-            updatedAt: '2024-05-05'
+const BlogManager = ({ data }) => {
+    const [updateBlog, { isLoading }] = useUpdateBlogMutation();
+    const [posts, setPosts] = useState(data || []);
+
+    useEffect(() => {
+        if (data) setPosts(data);
+    }, [data]);
+
+    const handleUpdatePost = (id, field, value) => {
+        const updated = posts.map(post =>
+            post.id === id ? { ...post, [field]: value } : post
+        );
+        setPosts(updated);
+    };
+
+    const handleSavePost = async () => {
+        try {
+            await updateBlog({ blogs: posts }).unwrap();
+            toast.success('Blog post saved successfully');
+        } catch (err) {
+            toast.error(err?.data?.message || 'Failed to update blog post');
         }
-    ]);
+    };
 
     const [editingPost, setEditingPost] = useState(null);
 
-    const handleCreatePost = () => {
+    const handleCreatePost = async () => {
         const newPost = {
-            id: posts.length + 1,
+            id: Date.now(),
             title: 'New Blog Post',
             slug: 'new-blog-post-' + Date.now(),
             excerpt: '',
@@ -1171,21 +1225,27 @@ const BlogManager = () => {
             publishedAt: '',
             updatedAt: new Date().toISOString().split('T')[0]
         };
-        setPosts([newPost, ...posts]);
+        const updated = [newPost, ...posts];
+        setPosts(updated);
         setEditingPost(newPost);
+        await handleSavePost(updated);
     };
 
-    const handleDeletePost = (id) => {
+    const handleDeletePost = async (id) => {
         if (window.confirm('Are you sure you want to delete this blog post?')) {
-            setPosts(posts.filter(post => post.id !== id));
+            const updated = posts.filter(post => post.id !== id);
+            setPosts(updated);
+            await handleSavePost(updated);
         }
     };
 
-    const handleToggleFeatured = (id) => {
-        setPosts(posts.map(post => ({
+    const handleToggleFeatured = async (id) => {
+        const updated = posts.map(post => ({
             ...post,
             featured: post.id === id ? !post.featured : false
-        })));
+        }));
+        setPosts(updated);
+        await handleSavePost(updated);
     };
 
     return (
@@ -1201,10 +1261,11 @@ const BlogManager = () => {
                 </div>
                 <button
                     onClick={handleCreatePost}
-                    className="px-4 py-2 rounded-lg font-sans font-medium transition-colors bg-blue-600 dark:bg-blue-500 text-white hover:bg-blue-700 dark:hover:bg-blue-600 flex items-center gap-2"
+                    disabled={isLoading}
+                    className="px-4 py-2 rounded-lg font-sans font-medium transition-colors bg-blue-600 dark:bg-blue-500 text-white hover:bg-blue-700 dark:hover:bg-blue-600 flex items-center gap-2 disabled:opacity-50"
                 >
                     <Plus size={16} />
-                    New Post
+                    {isLoading ? 'Creating...' : 'New Post'}
                 </button>
             </div>
 
@@ -1245,7 +1306,7 @@ const BlogManager = () => {
                                 </div>
                                 <div className="flex items-center justify-between text-xs">
                                     <span className="font-sans text-gray-500 dark:text-gray-400">
-                                        {post.category} • {post.views.toLocaleString()} views
+                                        {post.category} • {post?.views?.toLocaleString()} views
                                     </span>
                                     <div className="flex items-center gap-3">
                                         <button
@@ -1262,7 +1323,8 @@ const BlogManager = () => {
                                                 e.stopPropagation();
                                                 handleDeletePost(post.id);
                                             }}
-                                            className="p-1 text-red-500"
+                                            disabled={isLoading}
+                                            className="p-1 rounded text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 disabled:opacity-50"
                                         >
                                             <Trash2 size={12} />
                                         </button>
@@ -1288,14 +1350,18 @@ const BlogManager = () => {
                                 </div>
                                 <div className="flex items-center gap-2">
                                     <button
-                                        onClick={() => window.open(`/blog/${editingPost.slug}`, '_blank')}
+                                        onClick={() => window.open(`/blog/${posts.find(p => p.id === editingPost.id)?.slug}`, '_blank')}
                                         className="px-3 py-1.5 rounded-lg text-sm font-sans font-medium transition-colors border border-gray-300 dark:border-white/10 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/5 flex items-center gap-2"
                                     >
                                         <Eye size={14} />
                                         Preview
                                     </button>
-                                    <button className="px-4 py-2 rounded-lg font-sans font-medium transition-colors bg-blue-600 dark:bg-blue-500 text-white hover:bg-blue-700 dark:hover:bg-blue-600">
-                                        Save Changes
+                                    <button
+                                        onClick={handleSavePost}
+                                        disabled={isLoading}
+                                        className="px-4 py-2 rounded-lg font-sans font-medium transition-colors bg-blue-600 dark:bg-blue-500 text-white hover:bg-blue-700 dark:hover:bg-blue-600 disabled:opacity-50"
+                                    >
+                                        {isLoading ? 'Saving...' : 'Save Post'}
                                     </button>
                                 </div>
                             </div>
@@ -1308,7 +1374,19 @@ const BlogManager = () => {
                                     </label>
                                     <input
                                         type="text"
-                                        defaultValue={editingPost.title}
+                                        value={posts.find(p => p.id === editingPost.id)?.title || ''}
+                                        onChange={(e) => handleUpdatePost(editingPost.id, 'title', e.target.value)}
+                                        className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-white/10 bg-white dark:bg-dark-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-sans font-medium text-gray-900 dark:text-white mb-2">
+                                        Author
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={posts.find(p => p.id === editingPost.id)?.author || ''}
+                                        onChange={(e) => handleUpdatePost(editingPost.id, 'author', e.target.value)}
                                         className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-white/10 bg-white dark:bg-dark-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                     />
                                 </div>
@@ -1318,7 +1396,8 @@ const BlogManager = () => {
                                     </label>
                                     <input
                                         type="text"
-                                        defaultValue={editingPost.slug}
+                                        value={posts.find(p => p.id === editingPost.id)?.slug || ''}
+                                        onChange={(e) => handleUpdatePost(editingPost.id, 'slug', e.target.value)}
                                         className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-white/10 bg-white dark:bg-dark-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                     />
                                 </div>
@@ -1328,7 +1407,8 @@ const BlogManager = () => {
                                             Category
                                         </label>
                                         <select
-                                            defaultValue={editingPost.category}
+                                            value={posts.find(p => p.id === editingPost.id)?.category || 'Travel'}
+                                            onChange={(e) => handleUpdatePost(editingPost.id, 'category', e.target.value)}
                                             className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-white/10 bg-white dark:bg-dark-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                         >
                                             <option value="Travel">Travel</option>
@@ -1343,7 +1423,8 @@ const BlogManager = () => {
                                             Status
                                         </label>
                                         <select
-                                            defaultValue={editingPost.status}
+                                            value={posts.find(p => p.id === editingPost.id)?.status || 'draft'}
+                                            onChange={(e) => handleUpdatePost(editingPost.id, 'status', e.target.value)}
                                             className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-white/10 bg-white dark:bg-dark-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                         >
                                             <option value="draft">Draft</option>
@@ -1359,14 +1440,15 @@ const BlogManager = () => {
                                     </label>
                                     <div className="aspect-video rounded-lg overflow-hidden mb-2">
                                         <img
-                                            src={editingPost.image}
+                                            src={posts.find(p => p.id === editingPost.id)?.image}
                                             alt="Post Preview"
                                             className="w-full h-full object-cover"
                                         />
                                     </div>
                                     <input
                                         type="text"
-                                        defaultValue={editingPost.image}
+                                        value={posts.find(p => p.id === editingPost.id)?.image || ''}
+                                        onChange={(e) => handleUpdatePost(editingPost.id, 'image', e.target.value)}
                                         className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-white/10 bg-white dark:bg-dark-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                     />
                                 </div>
@@ -1375,7 +1457,8 @@ const BlogManager = () => {
                                         Excerpt
                                     </label>
                                     <textarea
-                                        defaultValue={editingPost.excerpt}
+                                        value={posts.find(p => p.id === editingPost.id)?.excerpt || ''}
+                                        onChange={(e) => handleUpdatePost(editingPost.id, 'excerpt', e.target.value)}
                                         rows="3"
                                         className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-white/10 bg-white dark:bg-dark-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                     />
@@ -1427,20 +1510,205 @@ const BlogManager = () => {
     );
 };
 
+// Media Library Manager Component
+const MediaLibraryManager = ({ data }) => {
+    const [updateMediaLibrary, { isLoading: isSaving }] = useUpdateMediaLibraryMutation();
+    const [deleteImage, { isLoading: isDeleting }] = useDeleteMediaImageMutation();
+
+    const [selectedFiles, setSelectedFiles] = useState([]);
+    const [dragActive, setDragActive] = useState(false);
+    const [existingImages, setExistingImages] = useState(data || []);
+    const [error, setError] = useState('');
+
+    useEffect(() => {
+        if (data) {
+            setExistingImages(data);
+        }
+    }, [data]);
+
+    const handleDrag = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (e.type === 'dragenter' || e.type === 'dragover') setDragActive(true);
+        else if (e.type === 'dragleave') setDragActive(false);
+    };
+
+    const handleDrop = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setDragActive(false);
+        if (e.dataTransfer.files && e.dataTransfer.files[0]) handleFiles(e.dataTransfer.files);
+    };
+
+    const handleFiles = (files) => {
+        const validFiles = Array.from(files).filter(file => {
+            const isImage = file.type.startsWith('image/');
+            const isValidSize = file.size <= 10 * 1024 * 1024;
+            if (!isImage) setError(`${file.name} is not a valid image file`);
+            if (!isValidSize) setError(`${file.name} is too large. Maximum size is 10MB`);
+            return isImage && isValidSize;
+        });
+
+        const newFiles = validFiles.map(file => ({
+            file,
+            id: Date.now() + Math.random(),
+            preview: URL.createObjectURL(file)
+        }));
+
+        setSelectedFiles(prev => [...prev, ...newFiles]);
+        if (error && newFiles.length > 0) setError('');
+    };
+
+    const removeFile = (fileId) => {
+        setSelectedFiles(prev => {
+            const fileToRemove = prev.find(f => f.id === fileId);
+            if (fileToRemove?.preview) URL.revokeObjectURL(fileToRemove.preview);
+            return prev.filter(f => f.id !== fileId);
+        });
+    };
+
+    const handleDeleteImage = async (publicId) => {
+        if (!window.confirm('Are you sure you want to delete this image?')) return;
+        try {
+            await deleteImage(publicId).unwrap();
+            toast.success('Image deleted successfully');
+            setExistingImages(prev => prev.filter(img => img.publicId !== publicId));
+        } catch (err) {
+            toast.error(err?.data?.message || 'Failed to delete image');
+        }
+    };
+
+    const handleSave = async () => {
+        try {
+            const formData = new FormData();
+            if (existingImages.length > 0) {
+                formData.append('existingMediaImages', JSON.stringify(existingImages));
+            }
+            selectedFiles.forEach((fileObj) => {
+                formData.append('mediaLibrary', fileObj.file);
+            });
+
+            await updateMediaLibrary(formData).unwrap();
+            toast.success('Media library updated successfully');
+            setSelectedFiles([]);
+        } catch (err) {
+            toast.error(err?.data?.message || 'Failed to update media library');
+        }
+    };
+
+    return (
+        <SpotlightCard className="rounded-2xl border bg-white border-gray-200 dark:bg-dark-800 dark:border-white/10 p-6">
+            <div className="flex items-center justify-between mb-6">
+                <div>
+                    <h3 className="font-serif text-xl font-bold text-gray-900 dark:text-white">Media Library</h3>
+                    <p className="text-sm font-sans text-gray-600 dark:text-gray-400">Manage all your uploaded images and media assets</p>
+                </div>
+                <button
+                    onClick={handleSave}
+                    disabled={isSaving || selectedFiles.length === 0}
+                    className="px-4 py-2 bg-blue-600 dark:bg-blue-500 text-white rounded-lg hover:bg-blue-700 dark:hover:bg-blue-600 disabled:opacity-50 flex items-center gap-2"
+                >
+                    <Save size={18} />
+                    {isSaving ? 'Saving...' : 'Save Changes'}
+                </button>
+            </div>
+
+            <div
+                onDragEnter={handleDrag}
+                onDragLeave={handleDrag}
+                onDragOver={handleDrag}
+                onDrop={handleDrop}
+                className={`border-2 border-dashed rounded-xl p-8 text-center transition-all ${dragActive ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/10' : 'border-gray-200 dark:border-white/10'
+                    }`}
+            >
+                <div className="max-w-xs mx-auto">
+                    <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center mx-auto mb-4 text-blue-600 dark:text-blue-400">
+                        <Upload size={24} />
+                    </div>
+                    <p className="font-sans font-medium text-gray-900 dark:text-white mb-1">Drag and drop images</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">Support for PNG, JPG, WEBP. Max 10MB.</p>
+                    <input
+                        type="file"
+                        multiple
+                        accept="image/*"
+                        className="hidden"
+                        id="media-upload"
+                        onChange={(e) => handleFiles(e.target.files)}
+                    />
+                    <label
+                        htmlFor="media-upload"
+                        className="px-4 py-2 bg-gray-100 dark:bg-white/5 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-white/10 cursor-pointer inline-block"
+                    >
+                        Browse Files
+                    </label>
+                </div>
+            </div>
+
+            {error && <p className="text-red-500 text-sm mt-4">{error}</p>}
+
+            {(existingImages.length > 0 || selectedFiles.length > 0) && (
+                <div className="mt-8 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                    {existingImages.map((image) => (
+                        <div key={image.publicId} className="relative group aspect-square rounded-lg overflow-hidden border border-gray-200 dark:border-white/10">
+                            <img src={image.url} alt="" className="w-full h-full object-cover" />
+                            <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                                <button
+                                    onClick={() => window.open(image.url, '_blank')}
+                                    className="p-2 bg-white/20 hover:bg-white/40 rounded-lg text-white"
+                                >
+                                    <Maximize2 size={16} />
+                                </button>
+                                <button
+                                    onClick={() => handleDeleteImage(image.publicId)}
+                                    disabled={isDeleting}
+                                    className="p-2 bg-red-500/80 hover:bg-red-500 rounded-lg text-white disabled:opacity-50"
+                                >
+                                    <Trash2 size={16} />
+                                </button>
+                            </div>
+                        </div>
+                    ))}
+                    {selectedFiles.map((file) => (
+                        <div key={file.id} className="relative aspect-square rounded-lg overflow-hidden border-2 border-blue-500">
+                            <img src={file.preview} alt="" className="w-full h-full object-cover" />
+                            <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                                <button
+                                    onClick={() => removeFile(file.id)}
+                                    className="p-2 bg-red-500/80 hover:bg-red-500 rounded-lg text-white"
+                                >
+                                    <X size={16} />
+                                </button>
+                            </div>
+                            <div className="absolute top-2 left-2 px-1.5 py-0.5 bg-blue-500 text-white text-[10px] rounded font-bold uppercase">New</div>
+                        </div>
+                    ))}
+                </div>
+            )}
+        </SpotlightCard>
+    );
+};
+
 // Main AdminContentManagement Component
 const AdminContentManagement = () => {
+    const { data: siteContentData, isLoading, isError, refetch } = useGetSiteContentQuery();
     const [activeTab, setActiveTab] = useState('homepage');
     const [searchTerm, setSearchTerm] = useState('');
+
+    if (isLoading) return <div className="flex items-center justify-center min-h-screen"><Loader /></div>;
+    if (isError) return <div className="text-center py-20 px-4">
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Failed to load content</h2>
+        <p className="text-gray-600 dark:text-gray-400 mb-6">There was an error fetching the site content.</p>
+        <button onClick={refetch} className="px-6 py-2 bg-blue-600 text-white rounded-lg">Try Again</button>
+    </div>;
+
+    const content = siteContentData?.data || {};
 
     const tabs = [
         { id: 'homepage', label: 'Homepage', icon: Layout },
         { id: 'gallery', label: 'Gallery', icon: Image },
         { id: 'offers', label: 'Offers & Deals', icon: Tag },
         { id: 'blog', label: 'Blog', icon: FileText },
-        { id: 'pages', label: 'Pages', icon: Globe },
         { id: 'media', label: 'Media Library', icon: Film },
-        { id: 'seo', label: 'SEO', icon: TrendingUp },
-        { id: 'analytics', label: 'Analytics', icon: BarChart }
     ];
 
     const handleExportContent = () => {
@@ -1533,46 +1801,17 @@ const AdminContentManagement = () => {
 
                 {/* Content Section */}
                 <div className="mb-8">
-                    {activeTab === 'homepage' && <HomepageEditor />}
-                    {activeTab === 'gallery' && <GalleryManager />}
-                    {activeTab === 'offers' && <OffersManager />}
-                    {activeTab === 'blog' && <BlogManager />}
-                    {activeTab === 'pages' && (
-                        <SpotlightCard className="rounded-2xl border bg-white border-gray-200 dark:bg-dark-800 dark:border-white/10 p-6">
-                            <div className="text-center py-12">
-                                <Globe size={48} className="mx-auto text-gray-400 mb-4" />
-                                <h3 className="font-serif text-xl font-bold text-gray-900 dark:text-white mb-2">
-                                    Pages Management
-                                </h3>
-                                <p className="text-sm font-sans text-gray-600 dark:text-gray-400 mb-4">
-                                    Manage static pages like About Us, Contact, Terms, etc.
-                                </p>
-                                <button className="px-4 py-2 rounded-lg font-sans font-medium transition-colors bg-blue-600 dark:bg-blue-500 text-white hover:bg-blue-700 dark:hover:bg-blue-600">
-                                    Manage Pages
-                                </button>
-                            </div>
-                        </SpotlightCard>
-                    )}
+                    {activeTab === 'homepage' && <HomepageEditor data={content.homepage} />}
+                    {activeTab === 'gallery' && <GalleryManager data={content.gallery} />}
+                    {activeTab === 'offers' && <OffersManager data={content.offers} />}
+                    {activeTab === 'blog' && <BlogManager data={content.blogs} />}
                     {activeTab === 'media' && (
-                        <SpotlightCard className="rounded-2xl border bg-white border-gray-200 dark:bg-dark-800 dark:border-white/10 p-6">
-                            <div className="text-center py-12">
-                                <Film size={48} className="mx-auto text-gray-400 mb-4" />
-                                <h3 className="font-serif text-xl font-bold text-gray-900 dark:text-white mb-2">
-                                    Media Library
-                                </h3>
-                                <p className="text-sm font-sans text-gray-600 dark:text-gray-400 mb-4">
-                                    Upload and manage all media files
-                                </p>
-                                <button className="px-4 py-2 rounded-lg font-sans font-medium transition-colors bg-blue-600 dark:bg-blue-500 text-white hover:bg-blue-700 dark:hover:bg-blue-600">
-                                    Open Media Library
-                                </button>
-                            </div>
-                        </SpotlightCard>
+                        <MediaLibraryManager data={content.mediaLibrary} />
                     )}
                 </div>
 
                 {/* Content Analytics */}
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                {/* <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                     <SpotlightCard className="rounded-2xl border bg-white border-gray-200 dark:bg-dark-800 dark:border-white/10 p-6">
                         <div className="flex items-center gap-3 mb-4">
                             <div className="w-12 h-12 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
@@ -1617,7 +1856,7 @@ const AdminContentManagement = () => {
                             </div>
                         </div>
                     </SpotlightCard>
-                </div>
+                </div> */}
             </div>
         </div>
     );

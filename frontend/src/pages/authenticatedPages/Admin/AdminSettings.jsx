@@ -35,7 +35,7 @@ import Loader from '../../../components/ui/Loader';
 import {
     useGetSettingsQuery,
     useUpdateSettingsMutation,
-    useDeleteGalleryImageMutation
+    // useDeleteGalleryImageMutation
 } from '../settingsApiSlice';
 import { toast } from 'react-hot-toast';
 import HotelInfoSettings from '../../../components/ui/settingsui/HotelInfoSettings';
@@ -48,7 +48,7 @@ const AdminSettings = () => {
     const [activeSection, setActiveSection] = useState('hotel-info');
     const { data: settings, isLoading, isError, error, refetch } = useGetSettingsQuery();
     const [updateSettings, { isLoading: isUpdating }] = useUpdateSettingsMutation();
-    const [deleteImage] = useDeleteGalleryImageMutation();
+    const [deleteImage] = () => { }
 
     // Handle setting updates from child components
     const handleUpdate = async ({ hotelInfo, logo, gallery, taxesAndFees, policies, emailTemplates }) => {

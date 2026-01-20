@@ -208,27 +208,6 @@ const updateSettings = asyncHandler(async (req, res) => {
       updateData.hotelInfo.logo = null;
     }
 
-    // Handle Gallery Uploads
-    if (req.files?.gallery?.length > 0) {
-      const galleryResult = await processGalleryUploads(req.files);
-
-      if (!galleryResult.success) {
-        res.status(400);
-        throw new Error(galleryResult.errors.join(", "));
-      }
-
-      newGalleryImages = galleryResult.images;
-      const existingGallery = updateData.existingGalleryImages || [];
-      updateData.hotelInfo.gallery = [...existingGallery, ...newGalleryImages];
-    } else if (updateData.existingGalleryImages) {
-      updateData.hotelInfo.gallery = updateData.existingGalleryImages;
-    }
-
-    // Clean up temporary fields
-    delete updateData.existingGalleryImages;
-    delete updateData.galleryMetadata;
-    delete updateData.removeLogo;
-
     // Update settings in database
     settings = await Setting.findOneAndUpdate({}, updateData, {
       new: true,
@@ -250,50 +229,12 @@ const updateSettings = asyncHandler(async (req, res) => {
         // if ((newLogo || req.body?.removeLogo === "true") && oldLogo?.publicId) {
         //   await cloudinary.uploader.destroy(oldLogo.publicId);
         // }
-
-        // Delete removed gallery images
-        const oldGalleryImages = settings.hotelInfo?.gallery || [];
-        const newGalleryPublicIds = new Set(
-          (updateData.hotelInfo?.gallery || []).map((img) => img.publicId)
-        );
-
-        const imagesToDelete = oldGalleryImages.filter(
-          (img) => !newGalleryPublicIds.has(img.publicId)
-        );
-
-        if (imagesToDelete.length > 0) {
-          const deletePromises = imagesToDelete.map((img) =>
-            cloudinary.uploader
-              .destroy(img.publicId)
-              .catch((err) =>
-                console.error(`Error deleting ${img.publicId}:`, err)
-              )
-          );
-          await Promise.allSettled(deletePromises);
-        }
       } catch (cleanupError) {
         console.error("Error during asset cleanup:", cleanupError);
       }
     }, 5000);
   } catch (error) {
     console.error("Settings update error:", error);
-
-    // Clean up uploaded files if update failed
-    // if (newLogo?.publicId) {
-    //   try {
-    //     await cloudinary.uploader.destroy(newLogo.publicId);
-    //   } catch (cleanupError) {
-    //     console.error("Error cleaning up new logo:", cleanupError);
-    //   }
-    // }
-
-    if (newGalleryImages.length > 0) {
-      try {
-        await cleanupFailedImages(newGalleryImages);
-      } catch (cleanupError) {
-        console.error("Error cleaning up gallery images:", cleanupError);
-      }
-    }
 
     // Send error response
     const statusCode = error.name === "ValidationError" ? 400 : 500;
@@ -304,53 +245,7 @@ const updateSettings = asyncHandler(async (req, res) => {
   }
 });
 
-// @desc    Delete gallery image
-// @route   DELETE /api/settings/gallery/:publicId
-// @access  Private/Admin
-const deleteGalleryImage = asyncHandler(async (req, res) => {
-  const { publicId } = req.params;
-
-  const settings = await Setting.findOne();
-  if (!settings) {
-    res.status(404);
-    throw new Error("Settings not found");
-  }
-
-  // Find and remove the image from gallery
-  const imageIndex = settings.hotelInfo?.gallery?.findIndex(
-    (img) => img.publicId === publicId
-  );
-
-  if (imageIndex === -1 || imageIndex === undefined) {
-    res.status(404);
-    throw new Error("Image not found in gallery");
-  }
-
-  // Remove from array
-  settings.hotelInfo.gallery.splice(imageIndex, 1);
-
-  await settings.save();
-
-  // Send response first
-  res.status(200).json({
-    success: true,
-    message: "Image deleted successfully",
-    data: settings.hotelInfo.gallery,
-  });
-
-  // Delete from Cloudinary AFTER response (with delay)
-  setTimeout(async () => {
-    try {
-      await cloudinary.uploader.destroy(publicId);
-      console.log("Gallery image deleted from Cloudinary:", publicId);
-    } catch (error) {
-      console.error("Error deleting image from Cloudinary:", error);
-    }
-  }, 3000); // 3 second delay
-});
-
 module.exports = {
   getSettings,
   updateSettings,
-  deleteGalleryImage,
 };

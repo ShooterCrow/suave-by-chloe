@@ -23,11 +23,11 @@ const Hero = () => {
             {/* Background Image with Overlay */}
             <div className="absolute inset-0">
                 <img
-                    src="/hero.png"
+                    src="https://res.cloudinary.com/ddjxdvgd5/image/upload/f_auto,q_auto/branding/heroImage"
                     alt="Luxury Hotel"
                     className="w-full h-full object-cover"
                 />
-                <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-gray-50 dark:from-black/70 dark:via-black/40 dark:to-black" />
+                <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-gray-100 dark:from-black/70 dark:via-black/40 dark:to-black" />
             </div>
 
             {/* Content Container */}

@@ -27,6 +27,6 @@ router.put(
 );
 
 // DELETE specific gallery image
-router.delete("/gallery/:publicId", protect, admin, deleteGalleryImage);
+// router.delete("/gallery/:publicId", protect, admin, deleteGalleryImage);
 
 module.exports = router;

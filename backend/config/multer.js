@@ -74,6 +74,16 @@ const storage = new CloudinaryStorage({
           { fetch_format: "auto" },
         ],
       };
+    } else if (file.fieldname === "galleryManagement") {
+      return {
+        folder: "mediaLibrary",
+        resource_type: "image",
+        transformation: [
+          { width: 1920, crop: "limit" },
+          { quality: "auto" },
+          { fetch_format: "auto" },
+        ],
+      };
     }
 
     // Gallery uploads (can stay dynamic)
@@ -165,6 +175,9 @@ const uploadWithErrorHandling = (fields) => {
                 : "none",
               gallery: req.files.gallery
                 ? `${req.files.gallery.length} file(s)`
+                : "none",
+              heroImage: req.files.heroImage
+                ? `${req.files.heroImage.length} file(s)`
                 : "none",
             }
           : "no files"

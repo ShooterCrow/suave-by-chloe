@@ -64,7 +64,7 @@ const rooms = [
 
 const RoomHighlights = () => {
     return (
-        <section className="py-20 px-4 sm:px-6 lg:px-8 bg-gray-50 dark:bg-void transition-colors duration-300">
+        <section className="py-20 px-4 sm:px-6 lg:px-8 bg-gray-100 dark:bg-void transition-colors duration-300">
             <div className="max-w-7xl mx-auto">
                 <div className="flex flex-col md:flex-row justify-between mb-12">
                     <div>
@@ -107,7 +107,7 @@ const RoomHighlights = () => {
                                 />
 
                                 {/* Content */}
-                                <div className="absolute bottom-0 left-0 w-full p-8 translate-y-2 group-hover:translate-y-0 transition-transform duration-300">
+                                <div className="absolute bottom-0 left-0 w-full p-8 transition-transform duration-300">
                                     <h3 className="font-serif text-2xl mb-2 drop-shadow-lg text-gray-900 dark:text-white transition-colors duration-300">
                                         {room.name}
                                     </h3>
@@ -123,14 +123,14 @@ const RoomHighlights = () => {
                                     <div className="space-y-2 mb-6">
                                         {room.features.map((feature, i) => (
                                             <div key={i} className="flex items-center gap-2 text-sm text-gray-800 dark:text-gray-200 transition-colors duration-300">
-                                                <div className="w-1.5 h-1.5 rounded-full bg-blue-500 shadow-blue-500/50 shadow-lg dark:bg-blue-400 dark:shadow-blue-400/50" />
+                                                <div className="w-1.5 h-1.5 rounded-full bg-blue-600 shadow-blue-600/50 shadow-lg dark:bg-blue-400 dark:shadow-blue-400/50" />
                                                 <span className="font-sans drop-shadow-lg">{feature}</span>
                                             </div>
                                         ))}
                                     </div>
 
-                                    <div className="flex items-center gap-2 font-mono text-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300 drop-shadow-lg text-gray-900 dark:text-white">
-                                        BOOK_NOW <ArrowRight size={16} />
+                                    <div className="w-full flex justify-center items-center gap-2 px-6 py-3 rounded-lg font-mono text-sm font-bold transition-all duration-300 bg-blue-600 text-white hover:bg-blue-700 hover:shadow-lg hover:shadow-blue-500/40 active:scale-95">
+                                        BOOK NOW <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
                                     </div>
                                 </div>
                             </SpotlightCard>

@@ -88,15 +88,6 @@ const settingSchema = new mongoose.Schema(
         height: Number,
         format: String,
       },
-      gallery: [
-        {
-          url: String,
-          publicId: String,
-          width: Number,
-          height: Number,
-          format: String,
-        },
-      ],
       coordinates: {
         lat: {
           type: Number,
