@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { Mail, Phone, MapPin, Send, Clock, MessageSquare, User, CheckCircle } from 'lucide-react';
 import { Helmet } from 'react-helmet-async';
+import { useGetSettingsQuery } from '../authenticatedPages/settingsApiSlice';
+import Loader from '../../components/ui/Loader';
 
 // SpotlightCard Component
 const SpotlightCard = ({ children, className = "" }) => {
@@ -66,7 +68,37 @@ const contactInfo = [
     }
 ];
 
+
 const ContactUs = () => {
+    // Fetch hotel settings
+    const {
+        data: settings,
+        isLoading: isSettingsLoading,
+        isError: isSettingsError,
+        refetch: refetchSettings
+    } = useGetSettingsQuery();
+
+    // Extract hotel info with fallbacks
+    const hotelInfo = settings?.hotelInfo || {
+        address: "Kubwa, Abuja, Nigeria",
+        phone: "+234 800 123 4567",
+        email: "reservations@suavebychloe.com",
+        hours: "24/7 Front Desk",
+        coordinates: { lat: 9.1550, lng: 7.3221 },
+        googleEmbedLink: ""
+    };
+
+    // Generate map URL
+    const generateMapUrl = () => {
+        if (hotelInfo.googleEmbedLink) {
+            return hotelInfo.googleEmbedLink;
+        }
+        if (hotelInfo.coordinates?.lat && hotelInfo.coordinates?.lng) {
+            return `https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3963.952912260219!2d${hotelInfo.coordinates.lng}!3d${hotelInfo.coordinates.lat}!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2z${hotelInfo.coordinates.lat}%2C${hotelInfo.coordinates.lng}!5e0!3m2!1sen!2sng!4v${Date.now()}!5m2!1sen!2sng`;
+        }
+        return "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3963.952912260219!2d7.3221!3d9.1550!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x104dd94dfdfa18b5%3A0x63b8cabfc117c098!2sTK%20Mall%20Kubwa!5e0!3m2!1sen!2sng!4v1768758512469!5m2!1sen!2sng";
+    };
+
     const [formData, setFormData] = useState({
         name: '',
         email: '',
@@ -276,14 +308,28 @@ const ContactUs = () => {
                     {/* Map & Additional Info */}
                     <div className="lg:col-span-2 space-y-6">
                         {/* Map */}
-                        <SpotlightCard className="h-[300px] rounded-2xl border overflow-hidden bg-white border-gray-200 dark:bg-dark-800 dark:border-white/10">
-                            <iframe
-                                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d15752.545!2d7.3221!3d9.1550!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x104e760c00000001%3A0x0!2sKubwa%2C+Abuja!5e0!3m2!1sen!2sng!4v1234567890"
-                                className="w-full h-full"
-                                style={{ border: 0 }}
-                                allowFullScreen=""
-                                loading="lazy"
-                            />
+                        <SpotlightCard className="h-[300px] rounded-2xl border overflow-hidden bg-white border-gray-200 dark:bg-dark-800 dark:border-white/10 relative">
+                            {isSettingsLoading ? (
+                                <div className="absolute inset-0 flex items-center justify-center bg-gray-100 dark:bg-gray-800">
+                                    <Loader />
+                                </div>
+                            ) : isSettingsError ? (
+                                <div className="flex items-center justify-center h-full text-center p-4">
+                                    <div>
+                                        <p className="text-red-500 mb-2">Failed to load map</p>
+                                        <button onClick={() => refetchSettings()} className="text-blue-500 hover:underline text-sm">Retry</button>
+                                    </div>
+                                </div>
+                            ) : (
+                                <iframe
+                                    src={generateMapUrl()}
+                                    className="w-full h-full"
+                                    style={{ border: 0 }}
+                                    allowFullScreen=""
+                                    loading="lazy"
+                                    referrerPolicy="no-referrer-when-downgrade"
+                                />
+                            )}
                         </SpotlightCard>
 
                         {/* FAQ Card */}
