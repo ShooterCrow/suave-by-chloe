@@ -48,7 +48,7 @@ const AdminSettings = () => {
     const [activeSection, setActiveSection] = useState('hotel-info');
     const { data: settings, isLoading, isError, error, refetch } = useGetSettingsQuery();
     const [updateSettings, { isLoading: isUpdating }] = useUpdateSettingsMutation();
-    const [deleteImage] = () => { }
+    // const [deleteImage] = useDeleteGalleryImageMutation();
 
     // Handle setting updates from child components
     const handleUpdate = async ({ hotelInfo, logo, gallery, taxesAndFees, policies, emailTemplates }) => {
@@ -89,16 +89,16 @@ const AdminSettings = () => {
     };
 
     // Handle gallery image deletion
-    const handleDeleteGalleryImage = async (publicId) => {
-        try {
-            await deleteImage(publicId).unwrap();
-            // Refetch settings to get updated gallery
-            await refetch();
-            toast.success('Image deleted successfully');
-        } catch (err) {
-            toast.error(err?.data?.message || 'Failed to delete image');
-        }
-    };
+    // const handleDeleteGalleryImage = async (publicId) => {
+    //     try {
+    //         await deleteImage(publicId).unwrap();
+    //         // Refetch settings to get updated gallery
+    //         await refetch();
+    //         toast.success('Image deleted successfully');
+    //     } catch (err) {
+    //         toast.error(err?.data?.message || 'Failed to delete image');
+    //     }
+    // };
 
     const sections = [
         { id: 'hotel-info', label: 'Hotel Information', icon: Building },
