@@ -9,7 +9,6 @@ import { toast } from 'react-hot-toast';
 
 // Hotel Info Component
 const HotelInfoSettings = ({ data, onUpdate, isSaving }) => {
-    console.log(data)
     const [hotelInfo, setHotelInfo] = useState(data || {
         name: '',
         tagline: '',
@@ -46,7 +45,7 @@ const HotelInfoSettings = ({ data, onUpdate, isSaving }) => {
     useEffect(() => {
         if (data) {
             setHotelInfo(data);
-            setLogoPreview(data.logo?.url || '');
+            setLogoPreview(data.logo?.url || "https://res.cloudinary.com/ddjxdvgd5/image/upload/branding/logo");
             setOriginalLogo(data.logo || null);
         }
     }, [data]);
