@@ -275,7 +275,7 @@ const AdminLayoutProvider = () => {
             {/* <AdminNavbar toggleSidebar={toggleSidebar} isSidebarOpen={sidebarOpen} /> */}
             <div className="flex max-w-7xl mx-auto">
                 {/* <AdminSidebar isOpen={sidebarOpen} /> */}
-                <main className="flex-1 px-4 sm:px-6 pb-24 lg:pb-6 pt-[130px]">
+                <main className="pb-24 lg:pb-6 pt-[130px]">
                     <Outlet />
                 </main>
             </div>

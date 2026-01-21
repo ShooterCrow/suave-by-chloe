@@ -30,7 +30,7 @@ const SpotlightCard = ({ children, className = "", onClick }) => {
                 before:[mask-composite:exclude]
                 after:content-[''] after:absolute after:inset-0 after:z-[1] after:opacity-0 after:transition-opacity after:duration-500 hover:after:opacity-100
                 after:[background:radial-gradient(800px_circle_at_var(--mouse-x)_var(--mouse-y),var(--spotlight-bg),transparent_40%)]
-                ${className}
+                
             `}
             style={{
                 '--spotlight-border': 'var(--spotlight-border-color)',

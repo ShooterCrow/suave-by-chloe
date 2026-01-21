@@ -662,7 +662,7 @@ const GalleryManager = ({ data }) => {
     };
 
     return (
-        <SpotlightCard className="rounded-2xl border bg-white border-gray-200 dark:bg-dark-800 dark:border-white/10 p-6">
+        <div className="rounded-2xl border bg-white border-gray-200 dark:bg-dark-800 dark:border-white/10 p-6">
             <div className="flex items-center justify-between mb-6">
                 <div>
                     <h3 className="font-serif text-xl font-bold text-gray-900 dark:text-white">
@@ -901,7 +901,7 @@ const GalleryManager = ({ data }) => {
                     )}
                 </div>
             </div>
-        </SpotlightCard>
+        </div>
     );
 };
 

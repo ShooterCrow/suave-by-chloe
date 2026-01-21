@@ -1018,12 +1018,12 @@ const AdminGuest = () => {
     };
 
     return (
-        <div className="min-h-screen bg-gray-50 dark:bg-void p-4 sm:p-6 lg:p-8">
+        <div className="min-h-screen bg-gray-50 dark:bg-void">
             <Helmet>
                 <title>Guest Management | Suave By Chloe</title>
                 <meta name="robots" content="noindex, nofollow" />
             </Helmet>
-            <div className="max-w-7xl mx-auto">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 {/* Page Header */}
                 <div className="mb-8">
                     <span className="font-mono text-sm text-blue-500 tracking-widest uppercase mb-2 block">
